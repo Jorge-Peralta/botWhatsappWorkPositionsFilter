@@ -34,8 +34,8 @@ All configuration is read from environment variables (see `src/config.ts`). Copy
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — | Claude API key (required if `EXTRACTION_PROVIDER=anthropic`) |
-| `GEMINI_API_KEY` | — | Gemini API key (required if `EXTRACTION_PROVIDER=gemini`, the default) |
+| `ANTHROPIC_API_KEY` | — | Claude API key (required if `EXTRACTION_PROVIDER=anthropic`) — get one from the [Anthropic Console](https://console.anthropic.com/settings/keys) |
+| `GEMINI_API_KEY` | — | Gemini API key (required if `EXTRACTION_PROVIDER=gemini`, the default) — get one from [Google AI Studio](https://aistudio.google.com/apikey) (free tier available) |
 | `EXTRACTION_PROVIDER` | `gemini` | Vision provider to use: `gemini` or `anthropic` |
 | `EXTRACTION_MODEL` | `claude-haiku-4-5` | Primary extraction model (Anthropic) |
 | `EXTRACTION_FALLBACK_MODEL` | `claude-sonnet-5` | Fallback extraction model (Anthropic) |
