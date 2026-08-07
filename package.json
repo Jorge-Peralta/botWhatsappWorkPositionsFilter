@@ -1,0 +1,48 @@
+{
+  "name": "bot-work-search",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WhatsApp job-listing bot: vision-LLM extraction, relevance scoring, SQLite storage, and a review dashboard",
+  "license": "MIT",
+  "author": "Jorge-Peralta",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jorge-Peralta/botWhatsappWorkPositionsFilter"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "test:capture": "tsx src/scripts/testCaptureFromHistory.ts",
+    "test:extract": "tsx src/scripts/testExtractFromImage.ts",
+    "typecheck": "tsc --noEmit",
+    "dashboard:api": "tsx src/dashboard/server.ts",
+    "dashboard:web": "vite --config web/vite.config.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
+    "@google/genai": "^2.16.0",
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.35.3",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/express": "^5.0.3",
+    "@types/node": "^26.1.2",
+    "@types/qrcode-terminal": "^0.12.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "pino-pretty": "^13.1.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.8",
+    "typescript": "^7.0.2",
+    "vite": "^7.1.11"
+  }
+}
