@@ -42,11 +42,28 @@ test('existing settings row gains default country/language and keeps its data', 
   assert.equal(settings.acceptLowerLevelRoles, false);
   assert.equal(settings.acceptEntryLevelAnyField, false);
   assert.equal(settings.notificationLanguage, 'en');
+  assert.deepEqual(settings.notifyNumbers, []);
+});
+
+test('updateSettings persists the extra notification numbers', () => {
+  store.updateSettings({ notifyNumbers: ['50499998888', '50433334444'] });
+  assert.deepEqual(store.getSettings().notifyNumbers, ['50499998888', '50433334444']);
 });
 
 test('updateSettings persists the notification language', () => {
   store.updateSettings({ notificationLanguage: 'es' });
   assert.equal(store.getSettings().notificationLanguage, 'es');
+});
+
+test('a hand-edited notify_numbers value that is not a string array reads as empty', () => {
+  const raw = new DatabaseSync(dbPath);
+  for (const value of ['not json', '5', 'null', '{"a":1}']) {
+    raw.prepare('UPDATE settings SET notify_numbers = ? WHERE id = 1').run(value);
+    assert.deepEqual(store.getSettings().notifyNumbers, [], `value ${value}`);
+  }
+  raw.prepare('UPDATE settings SET notify_numbers = ? WHERE id = 1').run('["50499998888", 7]');
+  assert.deepEqual(store.getSettings().notifyNumbers, ['50499998888']);
+  raw.close();
 });
 
 test('updateSettings persists the lower-qualification switches', () => {

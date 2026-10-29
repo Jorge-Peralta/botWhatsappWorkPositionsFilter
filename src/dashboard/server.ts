@@ -13,6 +13,7 @@ import {
   type SettingsRow,
 } from '../storage/settingsStore.js';
 import { parseCvUpload } from '../profile/cvUpload.js';
+import { normalizePhoneNumbers } from '../whatsapp/phoneNumber.js';
 import { generateProfileFromCv } from '../profile/generateProfileFromCv.js';
 import type { ExtractedJobData } from '../extraction/types.js';
 import type { CvProfileSkippedReason } from '../profile/types.js';
@@ -56,7 +57,10 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     (CANDIDATE_GENDERS as readonly unknown[]).includes(payload.candidateGender) &&
     typeof payload.acceptLowerLevelRoles === 'boolean' &&
     typeof payload.acceptEntryLevelAnyField === 'boolean' &&
-    (NOTIFICATION_LANGUAGES as readonly unknown[]).includes(payload.notificationLanguage)
+    (NOTIFICATION_LANGUAGES as readonly unknown[]).includes(payload.notificationLanguage) &&
+    Array.isArray(payload.notifyNumbers) &&
+    payload.notifyNumbers.every((item) => typeof item === 'string') &&
+    normalizePhoneNumbers(payload.notifyNumbers as string[]) !== null
   );
 }
 
@@ -179,7 +183,7 @@ app.put('/api/settings', (req: Request, res: Response) => {
     return;
   }
 
-  const updated = updateSettings(req.body);
+  const updated = updateSettings({ ...req.body, notifyNumbers: normalizePhoneNumbers(req.body.notifyNumbers)! });
   res.json(updated);
 });
 

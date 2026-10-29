@@ -29,6 +29,9 @@ export interface SettingsRow {
   // Language of the WhatsApp match notification and of the relevance
   // reasoning it quotes. Independent of `language`, which is the flyers' one.
   notificationLanguage: NotificationLanguage;
+  // Phone numbers (digits only, with country code) that also receive match
+  // notifications, on top of the bot's own number. Debug messages stay self-only.
+  notifyNumbers: string[];
 }
 
 export const CANDIDATE_GENDERS = ['unspecified', 'female', 'male'] as const;
@@ -56,6 +59,7 @@ interface SettingsDbRow {
   accept_lower_level_roles: number;
   accept_entry_level_any_field: number;
   notification_language: string;
+  notify_numbers: string;
   updated_at: string;
 }
 
@@ -80,6 +84,7 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   acceptLowerLevelRoles: false,
   acceptEntryLevelAnyField: false,
   notificationLanguage: 'en',
+  notifyNumbers: [],
 };
 
 function toCandidateGender(value: string): CandidateGender {
@@ -88,6 +93,19 @@ function toCandidateGender(value: string): CandidateGender {
 
 function toNotificationLanguage(value: string): NotificationLanguage {
   return (NOTIFICATION_LANGUAGES as readonly string[]).includes(value) ? (value as NotificationLanguage) : 'en';
+}
+
+// Only the dashboard writes this column, always as a JSON string array; a
+// hand-edited value that isn't one degrades to "no extra recipients" instead
+// of breaking every getSettings() call.
+function parseNotifyNumbers(raw: string): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
 }
 
 function mapRow(row: SettingsDbRow): SettingsRow {
@@ -105,6 +123,7 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     acceptLowerLevelRoles: row.accept_lower_level_roles === 1,
     acceptEntryLevelAnyField: row.accept_entry_level_any_field === 1,
     notificationLanguage: toNotificationLanguage(row.notification_language),
+    notifyNumbers: parseNotifyNumbers(row.notify_numbers),
   };
 }
 
@@ -131,7 +150,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
          country = ?, language = ?, keyword_filter_enabled = ?,
          candidate_gender = ?, accept_lower_level_roles = ?, accept_entry_level_any_field = ?,
-         notification_language = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         notification_language = ?, notify_numbers = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -147,6 +166,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     merged.acceptLowerLevelRoles ? 1 : 0,
     merged.acceptEntryLevelAnyField ? 1 : 0,
     merged.notificationLanguage,
+    JSON.stringify(merged.notifyNumbers),
   );
 
   return getSettings();
