@@ -47,7 +47,6 @@ export function ocrLanguagesFor(language: string): string[] {
     if (normalized) log.warn({ language }, 'No OCR language for profile language; using English only');
     return ['eng'];
   }
-  console.log('lan', code)
   return code === 'eng' ? ['eng'] : [code, 'eng'];
 }
 
