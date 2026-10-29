@@ -6,8 +6,21 @@ import type { SettingsRow } from '../storage/settingsStore.js';
 // The settings the relevance scorer reads, besides the feedback examples.
 export type RelevanceCandidate = Pick<
   SettingsRow,
-  'profile' | 'country' | 'language' | 'candidateGender' | 'acceptLowerLevelRoles' | 'acceptEntryLevelAnyField'
+  | 'profile'
+  | 'country'
+  | 'language'
+  | 'candidateGender'
+  | 'acceptLowerLevelRoles'
+  | 'acceptEntryLevelAnyField'
+  | 'notificationLanguage'
 >;
+
+// The reasoning is quoted in the candidate's notification, so it is written in
+// the notification language rather than the flyer's.
+const REASONING_LANGUAGE_NAMES: Record<RelevanceCandidate['notificationLanguage'], string> = {
+  en: 'English',
+  es: 'Spanish',
+};
 
 // Extra rules derived from candidate settings rather than the free-text
 // profile, so they apply consistently whatever the profile says.
@@ -49,7 +62,8 @@ function buildBasePrompt(candidate: RelevanceCandidate): string {
     'The candidate is actively job hunting and missing a good match ' +
     'is worse than an extra notification — when genuinely uncertain, lean toward a higher score rather ' +
     'than a lower one. If the extracted data is too sparse to judge (e.g. no title and no requirements), ' +
-    'score it low (0-20) and say so in the reasoning.\n\n' +
+    'score it low (0-20) and say so in the reasoning. ' +
+    `Write the reasoning in ${REASONING_LANGUAGE_NAMES[candidate.notificationLanguage]}.\n\n` +
     (rules.length ? `Screening rules:\n${rules.map((rule) => `- ${rule}`).join('\n')}\n\n` : '') +
     `Candidate profile:\n${candidate.profile}`
   );

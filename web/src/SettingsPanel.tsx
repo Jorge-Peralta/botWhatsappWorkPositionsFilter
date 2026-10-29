@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchSettings, generateProfileFromCv, updateSettings } from './api.js';
-import type { CandidateGender, Settings } from './types.js';
+import type { CandidateGender, NotificationLanguage, Settings } from './types.js';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -19,6 +19,7 @@ interface FormState {
   candidateGender: CandidateGender;
   acceptLowerLevelRoles: boolean;
   acceptEntryLevelAnyField: boolean;
+  notificationLanguage: NotificationLanguage;
 }
 
 function parseListInput(raw: string): string[] {
@@ -42,6 +43,7 @@ function toFormState(settings: Settings): FormState {
     candidateGender: settings.candidateGender,
     acceptLowerLevelRoles: settings.acceptLowerLevelRoles,
     acceptEntryLevelAnyField: settings.acceptEntryLevelAnyField,
+    notificationLanguage: settings.notificationLanguage,
   };
 }
 
@@ -135,6 +137,7 @@ export default function SettingsPanel() {
         candidateGender: form.candidateGender,
         acceptLowerLevelRoles: form.acceptLowerLevelRoles,
         acceptEntryLevelAnyField: form.acceptEntryLevelAnyField,
+        notificationLanguage: form.notificationLanguage,
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -261,6 +264,24 @@ export default function SettingsPanel() {
         </select>
         <p className="text-xs text-neutral-500">
           Flyers that explicitly ask for a different gender get a low score.
+        </p>
+      </div>
+
+      <div className={fieldWrapperClasses}>
+        <label htmlFor="notificationLanguage" className={labelClasses}>
+          Notification language
+        </label>
+        <select
+          id="notificationLanguage"
+          className={inputClasses}
+          value={form.notificationLanguage}
+          onChange={(e) => updateField('notificationLanguage', e.target.value as NotificationLanguage)}
+        >
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+        <p className="text-xs text-neutral-500">
+          Language of the WhatsApp match messages and of the match reasoning.
         </p>
       </div>
 

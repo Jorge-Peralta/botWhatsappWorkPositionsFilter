@@ -8,9 +8,10 @@ import { extractJobData } from '../extraction/extractJobData.js';
 import type { ExtractionOutcome } from '../extraction/types.js';
 import { computeDHash } from '../dedup/imageHash.js';
 import { evaluateKeywordFilter } from '../filtering/keywordFilter.js';
-import { createSafeSender } from './safeSend.js';
+import { createSafeImageSender } from './safeSend.js';
 import { scoreJobRelevance } from '../relevance/scoreJobRelevance.js';
 import { formatMatchNotification } from '../relevance/notificationFormat.js';
+import { getSettings } from '../storage/settingsStore.js';
 
 const log = logger.child({ module: 'messageHandler' });
 
@@ -128,13 +129,14 @@ export async function captureImageIfMatch(sock: WASocket, msg: WAMessage): Promi
 
         if (relevanceOutcome.relevance && relevanceOutcome.relevance.score >= relevanceOutcome.notifyThreshold) {
           try {
-            const sendDebugToSelf = createSafeSender(sock);
-            await sendDebugToSelf(
+            const sendImageToSelf = createSafeImageSender(sock);
+            await sendImageToSelf(
+              buffer,
               formatMatchNotification({
                 jobId,
                 extracted: extractionResult.extracted,
                 relevance: relevanceOutcome.relevance,
-                imagePath,
+                language: getSettings().notificationLanguage,
               }),
             );
             jobStore.markNotified(jobId);

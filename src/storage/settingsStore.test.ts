@@ -41,6 +41,12 @@ test('existing settings row gains default country/language and keeps its data', 
   assert.equal(settings.candidateGender, 'unspecified');
   assert.equal(settings.acceptLowerLevelRoles, false);
   assert.equal(settings.acceptEntryLevelAnyField, false);
+  assert.equal(settings.notificationLanguage, 'en');
+});
+
+test('updateSettings persists the notification language', () => {
+  store.updateSettings({ notificationLanguage: 'es' });
+  assert.equal(store.getSettings().notificationLanguage, 'es');
 });
 
 test('updateSettings persists the lower-qualification switches', () => {
