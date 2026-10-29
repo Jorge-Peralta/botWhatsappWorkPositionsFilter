@@ -10,6 +10,7 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { logAllParticipatingGroups } from './groupDiscovery.js';
 import { registerMessageHandler } from './messageHandler.js';
+import { resolveMonitoredChannels } from './channels.js';
 
 const log = logger.child({ module: 'connection' });
 
@@ -81,6 +82,7 @@ export async function startConnection(): Promise<WASocket> {
       pairingCodeRequested = false;
       log.info('connection open');
       void logAllParticipatingGroups(sock);
+      void resolveMonitoredChannels(sock);
       registerMessageHandler(sock);
     }
   });
