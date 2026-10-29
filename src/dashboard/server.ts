@@ -34,7 +34,9 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     isStringArray(payload.keywordsEs) &&
     isStringArray(payload.keywordsEn) &&
     isStringArray(payload.skillKeywords) &&
-    isStringArray(payload.acronyms)
+    isStringArray(payload.acronyms) &&
+    typeof payload.country === 'string' &&
+    typeof payload.language === 'string'
   );
 }
 

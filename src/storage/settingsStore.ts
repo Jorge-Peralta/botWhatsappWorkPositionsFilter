@@ -13,7 +13,13 @@ export interface SettingsRow {
   keywordsEn: string[];
   skillKeywords: string[];
   acronyms: string[];
+  country: string;
+  language: string;
 }
+
+// Where the monitored groups post from — used to hint the flyer language and
+// location to the extraction and relevance prompts. Blank values omit the hint.
+export type JobRegion = Pick<SettingsRow, 'country' | 'language'>;
 
 interface SettingsDbRow {
   id: number;
@@ -23,6 +29,8 @@ interface SettingsDbRow {
   keywords_en: string;
   tech_keywords: string;
   acronyms: string;
+  country: string;
+  language: string;
   updated_at: string;
 }
 
@@ -40,6 +48,8 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   keywordsEn: ENGLISH_ROLE_KEYWORDS,
   skillKeywords: SKILL_KEYWORDS,
   acronyms: CASE_SENSITIVE_ACRONYMS,
+  country: 'Honduras',
+  language: 'Spanish',
 };
 
 function mapRow(row: SettingsDbRow): SettingsRow {
@@ -50,6 +60,8 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     keywordsEn: JSON.parse(row.keywords_en) as string[],
     skillKeywords: JSON.parse(row.tech_keywords) as string[],
     acronyms: JSON.parse(row.acronyms) as string[],
+    country: row.country,
+    language: row.language,
   };
 }
 
@@ -74,7 +86,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
   db.prepare(
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
-         updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         country = ?, language = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -83,6 +95,8 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     JSON.stringify(merged.keywordsEn),
     JSON.stringify(merged.skillKeywords),
     JSON.stringify(merged.acronyms),
+    merged.country,
+    merged.language,
   );
 
   return getSettings();

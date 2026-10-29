@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS settings (
   keywords_en    TEXT NOT NULL,  -- JSON array
   tech_keywords  TEXT NOT NULL,  -- JSON array
   acronyms       TEXT NOT NULL,  -- JSON array
+  country        TEXT NOT NULL DEFAULT 'Honduras',
+  language       TEXT NOT NULL DEFAULT 'Spanish',
   updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
@@ -61,20 +63,32 @@ let db: DatabaseSync | null = null;
 // Phase 4 added columns to an already-shipped `jobs` table. CREATE TABLE IF
 // NOT EXISTS won't retrofit columns onto an existing table, so new columns
 // need an explicit, idempotent ALTER TABLE migration on top of the DDL.
-const JOBS_TABLE_MIGRATIONS: { column: string; ddl: string }[] = [
+interface ColumnMigration {
+  column: string;
+  ddl: string;
+}
+
+const JOBS_TABLE_MIGRATIONS: ColumnMigration[] = [
   { column: 'relevance_reasoning', ddl: 'ALTER TABLE jobs ADD COLUMN relevance_reasoning TEXT' },
   { column: 'relevance_skipped_reason', ddl: 'ALTER TABLE jobs ADD COLUMN relevance_skipped_reason TEXT' },
   { column: 'notified_at', ddl: 'ALTER TABLE jobs ADD COLUMN notified_at TEXT' },
 ];
 
-function migrateJobsTable(db: DatabaseSync): void {
+// Defaults match the region the bot was originally hardcoded for, so an
+// existing install keeps its prompts unchanged after upgrading.
+const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
+  { column: 'country', ddl: "ALTER TABLE settings ADD COLUMN country TEXT NOT NULL DEFAULT 'Honduras'" },
+  { column: 'language', ddl: "ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'Spanish'" },
+];
+
+function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
   const existingColumns = new Set(
-    (db.prepare('PRAGMA table_info(jobs)').all() as { name: string }[]).map((row) => row.name),
+    (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((row) => row.name),
   );
-  for (const migration of JOBS_TABLE_MIGRATIONS) {
+  for (const migration of migrations) {
     if (!existingColumns.has(migration.column)) {
       db.exec(migration.ddl);
-      log.info({ column: migration.column }, 'applied jobs table migration');
+      log.info({ table, column: migration.column }, 'applied table migration');
     }
   }
 }
@@ -89,8 +103,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
   if (existing) return;
 
   db.prepare(
-    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms)
-     VALUES (1, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
@@ -98,6 +112,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     JSON.stringify(DEFAULT_SETTINGS.keywordsEn),
     JSON.stringify(DEFAULT_SETTINGS.skillKeywords),
     JSON.stringify(DEFAULT_SETTINGS.acronyms),
+    DEFAULT_SETTINGS.country,
+    DEFAULT_SETTINGS.language,
   );
   log.info('seeded default settings row');
 }
@@ -112,7 +128,8 @@ export function initDb(): void {
 
   db = new DatabaseSync(config.dbPath);
   db.exec(DDL);
-  migrateJobsTable(db);
+  migrateTable(db, 'jobs', JOBS_TABLE_MIGRATIONS);
+  migrateTable(db, 'settings', SETTINGS_TABLE_MIGRATIONS);
   seedSettingsIfEmpty(db);
 
   log.info({ dbPath: config.dbPath }, 'initialized jobs database');

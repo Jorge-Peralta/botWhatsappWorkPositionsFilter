@@ -11,6 +11,8 @@ interface FormState {
   keywordsEn: string;
   skillKeywords: string;
   acronyms: string;
+  country: string;
+  language: string;
 }
 
 function parseListInput(raw: string): string[] {
@@ -28,6 +30,8 @@ function toFormState(settings: Settings): FormState {
     keywordsEn: settings.keywordsEn.join(', '),
     skillKeywords: settings.skillKeywords.join(', '),
     acronyms: settings.acronyms.join(', '),
+    country: settings.country,
+    language: settings.language,
   };
 }
 
@@ -86,6 +90,8 @@ export default function SettingsPanel() {
         keywordsEn: parseListInput(form.keywordsEn),
         skillKeywords: parseListInput(form.skillKeywords),
         acronyms: parseListInput(form.acronyms),
+        country: form.country.trim(),
+        language: form.language.trim(),
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -99,6 +105,8 @@ export default function SettingsPanel() {
   const textareaClasses =
     'w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm font-mono min-h-[120px] shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white';
   const fieldWrapperClasses = 'space-y-1';
+  const inputClasses =
+    'w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white';
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-4 overflow-y-auto">
@@ -123,10 +131,39 @@ export default function SettingsPanel() {
           type="number"
           min={0}
           max={100}
-          className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          className={inputClasses}
           value={form.threshold}
           onChange={(e) => updateField('threshold', e.target.value)}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={fieldWrapperClasses}>
+          <label htmlFor="country" className={labelClasses}>
+            Country of the job groups
+          </label>
+          <input
+            id="country"
+            type="text"
+            placeholder="e.g. Honduras"
+            className={inputClasses}
+            value={form.country}
+            onChange={(e) => updateField('country', e.target.value)}
+          />
+        </div>
+        <div className={fieldWrapperClasses}>
+          <label htmlFor="language" className={labelClasses}>
+            Flyer language
+          </label>
+          <input
+            id="language"
+            type="text"
+            placeholder="e.g. Spanish"
+            className={inputClasses}
+            value={form.language}
+            onChange={(e) => updateField('language', e.target.value)}
+          />
+        </div>
       </div>
 
       <div className={fieldWrapperClasses}>

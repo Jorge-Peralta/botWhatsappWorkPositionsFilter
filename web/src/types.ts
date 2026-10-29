@@ -47,4 +47,6 @@ export interface Settings {
   keywordsEn: string[];
   skillKeywords: string[];
   acronyms: string[];
+  country: string;
+  language: string;
 }
