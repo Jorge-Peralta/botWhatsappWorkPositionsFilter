@@ -42,11 +42,19 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
-export async function generateProfileFromCv(file: File): Promise<CvProfileDraft> {
+export async function generateProfileFromCv(
+  file: File,
+  options: { acceptLowerLevelRoles: boolean },
+): Promise<CvProfileDraft> {
   const res = await fetch('/api/profile/from-cv', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ fileName: file.name, mimeType: file.type, dataBase64: await readFileAsBase64(file) }),
+    body: JSON.stringify({
+      fileName: file.name,
+      mimeType: file.type,
+      dataBase64: await readFileAsBase64(file),
+      acceptLowerLevelRoles: options.acceptLowerLevelRoles,
+    }),
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;

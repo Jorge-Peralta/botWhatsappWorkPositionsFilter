@@ -1,14 +1,19 @@
 import { describeRegion } from '../extraction/prompt.js';
 import type { JobRegion } from '../storage/settingsStore.js';
+import type { CvProfileOptions } from './types.js';
 
 /**
  * Prompt for turning a candidate's CV into the bot's settings: a profile the
  * relevance scorer reads, plus the keyword lists the cheap pre-filters match
  * against flyer text. Profession-agnostic on purpose.
  */
-export function buildCvProfilePrompt(region: JobRegion): string {
+export function buildCvProfilePrompt(region: JobRegion, options: CvProfileOptions): string {
   const regionHint = describeRegion(region);
   const flyerContext = regionHint ? `WhatsApp job flyers (${regionHint})` : 'WhatsApp job flyers';
+  const lowerLevelHint = options.acceptLowerLevelRoles
+    ? ' The candidate also accepts lower-level roles in their field: also include lower-level and assistant ' +
+      'titles in the same field (e.g. "auxiliar de enfermeria" for a nurse, "auxiliar contable" for an accountant).'
+    : '';
 
   return (
     `The attached document is a job candidate's CV. They want a bot to screen ${flyerContext} for them. ` +
@@ -21,7 +26,8 @@ export function buildCvProfilePrompt(region: JobRegion): string {
     'For preferences the CV does not state (salary floor, dealbreakers, work arrangement), add a line ' +
     'like "- Dealbreakers: (fill in)" so the candidate can complete it.\n' +
     '2. keywordsEs: Spanish job titles and role words this candidate would match, as they would appear on a ' +
-    'flyer, without accents being required, including feminine and masculine forms (e.g. "contador", "contadora").\n' +
+    'flyer, without accents being required, including feminine and masculine forms (e.g. "contador", "contadora").' +
+    `${lowerLevelHint}\n` +
     '3. keywordsEn: the English equivalents.\n' +
     '4. skillKeywords: distinctive skills, tools, certifications or licenses from the CV that a flyer for a ' +
     'matching job would mention. Avoid generic words (e.g. "experiencia", "trabajo", "responsable") that ' +

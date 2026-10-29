@@ -47,7 +47,9 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     typeof payload.country === 'string' &&
     typeof payload.language === 'string' &&
     typeof payload.keywordFilterEnabled === 'boolean' &&
-    (CANDIDATE_GENDERS as readonly unknown[]).includes(payload.candidateGender)
+    (CANDIDATE_GENDERS as readonly unknown[]).includes(payload.candidateGender) &&
+    typeof payload.acceptLowerLevelRoles === 'boolean' &&
+    typeof payload.acceptEntryLevelAnyField === 'boolean'
   );
 }
 
@@ -89,7 +91,7 @@ app.post('/api/profile/from-cv', express.json({ limit: '8mb' }), async (req: Req
     return;
   }
 
-  const outcome = await generateProfileFromCv(upload.cv);
+  const outcome = await generateProfileFromCv(upload.cv, upload.options);
   if (!outcome.draft) {
     const status = outcome.skippedReason === 'api_key_not_configured' ? 503 : 502;
     res.status(status).json({ error: CV_PROFILE_ERRORS[outcome.skippedReason ?? 'llm_error'] });

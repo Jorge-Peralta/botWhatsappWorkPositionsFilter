@@ -5,7 +5,7 @@ import { normalizeDraft } from './cvUpload.js';
 import { buildCvProfilePrompt } from './prompt.js';
 import * as anthropicCvProfile from './providers/anthropicCvProfile.js';
 import * as geminiCvProfile from './providers/geminiCvProfile.js';
-import type { CvInput, CvProfileOutcome } from './types.js';
+import type { CvInput, CvProfileOptions, CvProfileOutcome } from './types.js';
 
 const log = logger.child({ module: 'generateProfileFromCv' });
 
@@ -14,7 +14,7 @@ const log = logger.child({ module: 'generateProfileFromCv' });
  * provider. Never throws — failures resolve to a skippedReason. Persists
  * nothing; the dashboard shows the draft for review before saving.
  */
-export async function generateProfileFromCv(cv: CvInput): Promise<CvProfileOutcome> {
+export async function generateProfileFromCv(cv: CvInput, options: CvProfileOptions): Promise<CvProfileOutcome> {
   const providerApiKeyConfigured =
     config.extractionProvider === 'anthropic' ? config.anthropicApiKey : config.geminiApiKey;
 
@@ -24,7 +24,7 @@ export async function generateProfileFromCv(cv: CvInput): Promise<CvProfileOutco
   }
 
   try {
-    const prompt = buildCvProfilePrompt(getSettings());
+    const prompt = buildCvProfilePrompt(getSettings(), options);
     const provider = config.extractionProvider === 'anthropic' ? anthropicCvProfile : geminiCvProfile;
     const draft = await provider.draftProfile(cv, prompt);
     return draft ? { draft: normalizeDraft(draft), skippedReason: null } : { draft: null, skippedReason: 'llm_no_output' };

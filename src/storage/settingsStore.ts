@@ -21,6 +21,11 @@ export interface SettingsRow {
   // Only set by the candidate themselves (never inferred from a CV); lets the
   // scorer penalize flyers that explicitly require a different gender.
   candidateGender: CandidateGender;
+  // Widen the search below the CV: lower-level roles in the candidate's own
+  // field (no overqualification penalty), and general entry-level jobs in any
+  // field (also matched by the built-in ENTRY_LEVEL_KEYWORDS).
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
 
 export const CANDIDATE_GENDERS = ['unspecified', 'female', 'male'] as const;
@@ -42,6 +47,8 @@ interface SettingsDbRow {
   language: string;
   keyword_filter_enabled: number;
   candidate_gender: string;
+  accept_lower_level_roles: number;
+  accept_entry_level_any_field: number;
   updated_at: string;
 }
 
@@ -63,6 +70,8 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   language: 'Spanish',
   keywordFilterEnabled: true,
   candidateGender: 'unspecified',
+  acceptLowerLevelRoles: false,
+  acceptEntryLevelAnyField: false,
 };
 
 function toCandidateGender(value: string): CandidateGender {
@@ -81,6 +90,8 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     language: row.language,
     keywordFilterEnabled: row.keyword_filter_enabled === 1,
     candidateGender: toCandidateGender(row.candidate_gender),
+    acceptLowerLevelRoles: row.accept_lower_level_roles === 1,
+    acceptEntryLevelAnyField: row.accept_entry_level_any_field === 1,
   };
 }
 
@@ -106,7 +117,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
          country = ?, language = ?, keyword_filter_enabled = ?,
-         candidate_gender = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         candidate_gender = ?, accept_lower_level_roles = ?, accept_entry_level_any_field = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -119,6 +130,8 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     merged.language,
     merged.keywordFilterEnabled ? 1 : 0,
     merged.candidateGender,
+    merged.acceptLowerLevelRoles ? 1 : 0,
+    merged.acceptEntryLevelAnyField ? 1 : 0,
   );
 
   return getSettings();

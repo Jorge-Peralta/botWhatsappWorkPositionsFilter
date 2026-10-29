@@ -51,6 +51,8 @@ export interface Settings {
   language: string;
   keywordFilterEnabled: boolean;
   candidateGender: CandidateGender;
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
 
 export type CandidateGender = 'unspecified' | 'female' | 'male';

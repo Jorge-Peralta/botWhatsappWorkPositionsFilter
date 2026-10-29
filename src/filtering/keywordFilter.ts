@@ -1,4 +1,4 @@
-import { containsKeyword } from '../extraction/keywords.js';
+import { containsKeyword, keywordSetsFromSettings } from '../extraction/keywords.js';
 import { getSettings } from '../storage/settingsStore.js';
 import type { ExtractedJobData, OcrPreFilterResult } from '../extraction/types.js';
 
@@ -27,12 +27,7 @@ export function evaluateKeywordFilter(input: EvaluateKeywordFilterInput): Keywor
     return { keywordMatch: null, matchedKeyword: null };
   }
 
-  const keywordSets = {
-    keywordsEs: settings.keywordsEs,
-    keywordsEn: settings.keywordsEn,
-    skillKeywords: settings.skillKeywords,
-    acronyms: settings.acronyms,
-  };
+  const keywordSets = keywordSetsFromSettings(settings);
 
   if (input.extracted) {
     const haystack = [

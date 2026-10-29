@@ -7,18 +7,19 @@ const toBase64 = (text: string) => Buffer.from(text, 'utf-8').toString('base64')
 test('accepts a PDF upload as a base64 document', () => {
   const result = parseCvUpload({ fileName: 'cv.pdf', mimeType: 'application/pdf', dataBase64: toBase64('%PDF-1.7') });
 
-  assert.deepEqual(result, { ok: true, cv: { kind: 'pdf', base64: toBase64('%PDF-1.7') } });
+  assert.deepEqual(result, { ok: true, cv: { kind: 'pdf', base64: toBase64('%PDF-1.7') }, options: { acceptLowerLevelRoles: false } });
 });
 
 test('decodes a plain-text or markdown upload to text', () => {
   assert.deepEqual(
     parseCvUpload({ fileName: 'cv.txt', mimeType: 'text/plain', dataBase64: toBase64('Enfermera, 5 años') }),
-    { ok: true, cv: { kind: 'text', text: 'Enfermera, 5 años' } },
+    { ok: true, cv: { kind: 'text', text: 'Enfermera, 5 años' }, options: { acceptLowerLevelRoles: false } },
   );
   // Browsers often send an empty mime type for .md files; fall back to the extension.
   assert.deepEqual(parseCvUpload({ fileName: 'cv.md', mimeType: '', dataBase64: toBase64('# CV') }), {
     ok: true,
     cv: { kind: 'text', text: '# CV' },
+    options: { acceptLowerLevelRoles: false },
   });
 });
 
@@ -66,4 +67,14 @@ test('normalizeDraft trims, dedupes, and lowercases keywords but keeps acronym c
     skillKeywords: ['triage'],
     acronyms: ['UCI'],
   });
+});
+
+test('carries the lower-level option through, defaulting to false for anything but true', () => {
+  const body = { fileName: 'cv.txt', mimeType: 'text/plain', dataBase64: toBase64('CV') };
+
+  const accepted = parseCvUpload({ ...body, acceptLowerLevelRoles: true });
+  assert.ok(accepted.ok && accepted.options.acceptLowerLevelRoles === true);
+
+  const coerced = parseCvUpload({ ...body, acceptLowerLevelRoles: 'yes' });
+  assert.ok(coerced.ok && coerced.options.acceptLowerLevelRoles === false);
 });
