@@ -1,17 +1,9 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { useScratchDb } from '../testSupport/scratchDb.js';
 
-// config.ts resolves DB_PATH at import time, so point it at a scratch
-// database before importing anything that pulls config in.
-const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), 'settings-test-'));
-const dbPath = path.join(scratchDir, 'jobs.db');
-process.env.DB_PATH = dbPath;
-process.env.IMAGES_DIR = path.join(scratchDir, 'images');
-process.env.SESSION_DIR = path.join(scratchDir, 'auth');
+const dbPath = useScratchDb();
 
 // A settings table as shipped before country/language existed.
 function createLegacySettingsTable(): void {
@@ -45,6 +37,15 @@ test('existing settings row gains default country/language and keeps its data', 
   assert.deepEqual(settings.skillKeywords, ['excel']);
   assert.equal(settings.country, 'Honduras');
   assert.equal(settings.language, 'Spanish');
+  assert.equal(settings.keywordFilterEnabled, true);
+});
+
+test('updateSettings persists the keyword filter toggle', () => {
+  store.updateSettings({ keywordFilterEnabled: false });
+  assert.equal(store.getSettings().keywordFilterEnabled, false);
+
+  store.updateSettings({ keywordFilterEnabled: true });
+  assert.equal(store.getSettings().keywordFilterEnabled, true);
 });
 
 test('updateSettings persists country and language', () => {

@@ -15,6 +15,9 @@ export interface SettingsRow {
   acronyms: string[];
   country: string;
   language: string;
+  // When false, the keyword lists stop gating flyers: every flyer is sent to
+  // vision extraction and relevance scoring (more API calls, no keyword misses).
+  keywordFilterEnabled: boolean;
 }
 
 // Where the monitored groups post from — used to hint the flyer language and
@@ -31,6 +34,7 @@ interface SettingsDbRow {
   acronyms: string;
   country: string;
   language: string;
+  keyword_filter_enabled: number;
   updated_at: string;
 }
 
@@ -50,6 +54,7 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   acronyms: CASE_SENSITIVE_ACRONYMS,
   country: 'Honduras',
   language: 'Spanish',
+  keywordFilterEnabled: true,
 };
 
 function mapRow(row: SettingsDbRow): SettingsRow {
@@ -62,6 +67,7 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     acronyms: JSON.parse(row.acronyms) as string[],
     country: row.country,
     language: row.language,
+    keywordFilterEnabled: row.keyword_filter_enabled === 1,
   };
 }
 
@@ -86,7 +92,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
   db.prepare(
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
-         country = ?, language = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         country = ?, language = ?, keyword_filter_enabled = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -97,6 +103,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     JSON.stringify(merged.acronyms),
     merged.country,
     merged.language,
+    merged.keywordFilterEnabled ? 1 : 0,
   );
 
   return getSettings();

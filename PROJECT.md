@@ -2,11 +2,17 @@
 
 ## Goal
 Monitor a set of WhatsApp groups/channels that post job openings as images. Automatically
-extract structured data from each image, filter for roles relevant to my profile
-(IT / fullstack, .NET, React/TS, sysadmin/TI leadership), and surface only the relevant
-matches via notification, avoiding manual scrolling through noisy group chats.
+extract structured data from each image, filter for roles relevant to one candidate's
+profile — in any profession, not only IT — and surface only the relevant matches via
+notification, avoiding manual scrolling through noisy group chats.
 
-## User profile (for the matching/classification step)
+## Candidate profile (for the matching/classification step)
+One candidate per running bot. The profile, keyword lists, country/flyer language and the
+keyword-filter switch live in the `settings` table and are edited from the dashboard.
+Uploading a CV drafts the profile and keywords with the configured LLM; the candidate
+reviews the draft before saving.
+
+The fresh-install seed is the original author's profile, kept as an example:
 - Fullstack developer: C#/.NET, React/TypeScript
 - Comfortable with AI tooling (Claude, DeepSeek) and dev automation
 - Location: Tegucigalpa, Honduras (prioritize local/remote-friendly roles)
@@ -28,11 +34,12 @@ matches via notification, avoiding manual scrolling through noisy group chats.
    - Target fields: title, company, location, requirements, salary (if present),
      contact method, source group, timestamp
    - Optional cheap pre-filter: run OCR first; only call the vision LLM when OCR text
-     contains IT-adjacent keywords or is low-confidence — controls API cost at volume
+     contains the candidate's keywords or is low-confidence — controls API cost at volume
 
 3. **Filtering / classification**
-   - Fast pass: keyword filter (IT, desarrollador, programador, .NET, React,
-     sistemas, TI, fullstack, etc.) to cheaply discard obvious non-matches
+   - Fast pass: keyword filter over the candidate's role/skill keywords (e.g. for the
+     seed profile: desarrollador, programador, .NET, React, sistemas, TI) to cheaply
+     discard obvious non-matches; can be switched off so every flyer is scored
    - LLM pass: for anything that survives, score relevance against the profile above
      and return a reason — this score/threshold is what gets tuned over time
    - Deduplicate reposted flyers via image hash or text similarity before scoring

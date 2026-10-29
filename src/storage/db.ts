@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS settings (
   acronyms       TEXT NOT NULL,  -- JSON array
   country        TEXT NOT NULL DEFAULT 'Honduras',
   language       TEXT NOT NULL DEFAULT 'Spanish',
+  keyword_filter_enabled INTEGER NOT NULL DEFAULT 1,  -- boolean
   updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
@@ -74,11 +75,15 @@ const JOBS_TABLE_MIGRATIONS: ColumnMigration[] = [
   { column: 'notified_at', ddl: 'ALTER TABLE jobs ADD COLUMN notified_at TEXT' },
 ];
 
-// Defaults match the region the bot was originally hardcoded for, so an
-// existing install keeps its prompts unchanged after upgrading.
+// Defaults match the bot's original hardcoded behavior (region, keyword
+// gate on), so an existing install behaves the same after upgrading.
 const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
   { column: 'country', ddl: "ALTER TABLE settings ADD COLUMN country TEXT NOT NULL DEFAULT 'Honduras'" },
   { column: 'language', ddl: "ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'Spanish'" },
+  {
+    column: 'keyword_filter_enabled',
+    ddl: 'ALTER TABLE settings ADD COLUMN keyword_filter_enabled INTEGER NOT NULL DEFAULT 1',
+  },
 ];
 
 function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
@@ -103,8 +108,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
   if (existing) return;
 
   db.prepare(
-    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
@@ -114,6 +119,7 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     JSON.stringify(DEFAULT_SETTINGS.acronyms),
     DEFAULT_SETTINGS.country,
     DEFAULT_SETTINGS.language,
+    DEFAULT_SETTINGS.keywordFilterEnabled ? 1 : 0,
   );
   log.info('seeded default settings row');
 }
