@@ -25,11 +25,20 @@ const salesFlyer: ExtractedJobData = {
 };
 
 test('with the filter enabled, a flyer without profile keywords is a non-match', () => {
-  updateSettings({ keywordFilterEnabled: true });
+  updateSettings({ keywordFilterEnabled: true, acceptEntryLevelAnyField: false });
 
   assert.deepEqual(evaluateKeywordFilter({ extracted: salesFlyer, ocrPreFilterResult: null, caption: null }), {
     keywordMatch: false,
     matchedKeyword: null,
+  });
+});
+
+test('with entry-level jobs accepted, a general flyer passes the filter via the built-in list', () => {
+  updateSettings({ keywordFilterEnabled: true, acceptEntryLevelAnyField: true });
+
+  assert.deepEqual(evaluateKeywordFilter({ extracted: salesFlyer, ocrPreFilterResult: null, caption: null }), {
+    keywordMatch: true,
+    matchedKeyword: 'vendedor',
   });
 });
 

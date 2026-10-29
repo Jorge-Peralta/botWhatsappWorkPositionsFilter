@@ -17,6 +17,8 @@ interface FormState {
   language: string;
   keywordFilterEnabled: boolean;
   candidateGender: CandidateGender;
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
 
 function parseListInput(raw: string): string[] {
@@ -38,6 +40,8 @@ function toFormState(settings: Settings): FormState {
     language: settings.language,
     keywordFilterEnabled: settings.keywordFilterEnabled,
     candidateGender: settings.candidateGender,
+    acceptLowerLevelRoles: settings.acceptLowerLevelRoles,
+    acceptEntryLevelAnyField: settings.acceptEntryLevelAnyField,
   };
 }
 
@@ -81,11 +85,11 @@ export default function SettingsPanel() {
   // Fills the form with the CV draft but does not save — the candidate reviews
   // and edits it first, then saves with the normal Save button.
   async function handleGenerateFromCv() {
-    if (!cvFile) return;
+    if (!cvFile || !form) return;
 
     setCvState({ kind: 'generating' });
     try {
-      const draft = await generateProfileFromCv(cvFile);
+      const draft = await generateProfileFromCv(cvFile, { acceptLowerLevelRoles: form.acceptLowerLevelRoles });
       setForm((prev) =>
         prev
           ? {
@@ -129,6 +133,8 @@ export default function SettingsPanel() {
         language: form.language.trim(),
         keywordFilterEnabled: form.keywordFilterEnabled,
         candidateGender: form.candidateGender,
+        acceptLowerLevelRoles: form.acceptLowerLevelRoles,
+        acceptEntryLevelAnyField: form.acceptEntryLevelAnyField,
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -257,6 +263,42 @@ export default function SettingsPanel() {
           Flyers that explicitly ask for a different gender get a low score.
         </p>
       </div>
+
+      <fieldset className="space-y-3">
+        <legend className={labelClasses}>Also look for jobs below my qualifications</legend>
+        <div className="flex items-start gap-3">
+          <input
+            id="acceptLowerLevelRoles"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={form.acceptLowerLevelRoles}
+            onChange={(e) => updateField('acceptLowerLevelRoles', e.target.checked)}
+          />
+          <label htmlFor="acceptLowerLevelRoles" className="text-sm">
+            <span className="font-medium">Lower-level roles in my field</span>
+            <span className="block text-xs text-neutral-500">
+              Assistant, junior or auxiliary positions are not penalized for overqualification. Turn this on before
+              Generate from CV to also get those job titles as keywords.
+            </span>
+          </label>
+        </div>
+        <div className="flex items-start gap-3">
+          <input
+            id="acceptEntryLevelAnyField"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={form.acceptEntryLevelAnyField}
+            onChange={(e) => updateField('acceptEntryLevelAnyField', e.target.checked)}
+          />
+          <label htmlFor="acceptEntryLevelAnyField" className="text-sm">
+            <span className="font-medium">Entry-level jobs in any field</span>
+            <span className="block text-xs text-neutral-500">
+              Cashier, warehouse, customer service, sales and similar jobs that need no specific experience. Expect
+              many more notifications.
+            </span>
+          </label>
+        </div>
+      </fieldset>
 
       <div className="flex items-start gap-3">
         <input

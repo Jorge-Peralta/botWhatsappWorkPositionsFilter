@@ -39,6 +39,16 @@ test('existing settings row gains default country/language and keeps its data', 
   assert.equal(settings.language, 'Spanish');
   assert.equal(settings.keywordFilterEnabled, true);
   assert.equal(settings.candidateGender, 'unspecified');
+  assert.equal(settings.acceptLowerLevelRoles, false);
+  assert.equal(settings.acceptEntryLevelAnyField, false);
+});
+
+test('updateSettings persists the lower-qualification switches', () => {
+  store.updateSettings({ acceptLowerLevelRoles: true, acceptEntryLevelAnyField: true });
+  const settings = store.getSettings();
+
+  assert.equal(settings.acceptLowerLevelRoles, true);
+  assert.equal(settings.acceptEntryLevelAnyField, true);
 });
 
 test('updateSettings persists the candidate gender', () => {

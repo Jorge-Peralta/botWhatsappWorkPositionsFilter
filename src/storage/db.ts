@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS settings (
   language       TEXT NOT NULL DEFAULT 'Spanish',
   keyword_filter_enabled INTEGER NOT NULL DEFAULT 1,  -- boolean
   candidate_gender TEXT NOT NULL DEFAULT 'unspecified',
+  accept_lower_level_roles     INTEGER NOT NULL DEFAULT 0,  -- boolean
+  accept_entry_level_any_field INTEGER NOT NULL DEFAULT 0,  -- boolean
   updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
@@ -89,6 +91,14 @@ const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
     column: 'candidate_gender',
     ddl: "ALTER TABLE settings ADD COLUMN candidate_gender TEXT NOT NULL DEFAULT 'unspecified'",
   },
+  {
+    column: 'accept_lower_level_roles',
+    ddl: 'ALTER TABLE settings ADD COLUMN accept_lower_level_roles INTEGER NOT NULL DEFAULT 0',
+  },
+  {
+    column: 'accept_entry_level_any_field',
+    ddl: 'ALTER TABLE settings ADD COLUMN accept_entry_level_any_field INTEGER NOT NULL DEFAULT 0',
+  },
 ];
 
 function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
@@ -113,8 +123,9 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
   if (existing) return;
 
   db.prepare(
-    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled, candidate_gender)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled, candidate_gender,
+       accept_lower_level_roles, accept_entry_level_any_field)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
@@ -126,6 +137,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     DEFAULT_SETTINGS.language,
     DEFAULT_SETTINGS.keywordFilterEnabled ? 1 : 0,
     DEFAULT_SETTINGS.candidateGender,
+    DEFAULT_SETTINGS.acceptLowerLevelRoles ? 1 : 0,
+    DEFAULT_SETTINGS.acceptEntryLevelAnyField ? 1 : 0,
   );
   log.info('seeded default settings row');
 }

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Tesseract from 'tesseract.js';
 import { logger } from '../logger.js';
-import { containsKeyword, type KeywordSets } from './keywords.js';
+import { containsKeyword, keywordSetsFromSettings, type KeywordSets } from './keywords.js';
 import { getSettings } from '../storage/settingsStore.js';
 import type { OcrPreFilterResult } from './types.js';
 
@@ -36,12 +36,7 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
   return classifyOcrText({
     text: data.text ?? '',
     confidence: data.confidence ?? 0,
-    keywordSets: {
-      keywordsEs: settings.keywordsEs,
-      keywordsEn: settings.keywordsEn,
-      skillKeywords: settings.skillKeywords,
-      acronyms: settings.acronyms,
-    },
+    keywordSets: keywordSetsFromSettings(settings),
     keywordFilterEnabled: settings.keywordFilterEnabled,
   });
 }

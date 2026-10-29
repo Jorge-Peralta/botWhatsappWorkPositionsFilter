@@ -4,7 +4,10 @@ import type { JobRow } from '../storage/jobStore.js';
 import type { SettingsRow } from '../storage/settingsStore.js';
 
 // The settings the relevance scorer reads, besides the feedback examples.
-export type RelevanceCandidate = Pick<SettingsRow, 'profile' | 'country' | 'language' | 'candidateGender'>;
+export type RelevanceCandidate = Pick<
+  SettingsRow,
+  'profile' | 'country' | 'language' | 'candidateGender' | 'acceptLowerLevelRoles' | 'acceptEntryLevelAnyField'
+>;
 
 // Extra rules derived from candidate settings rather than the free-text
 // profile, so they apply consistently whatever the profile says.
@@ -15,6 +18,20 @@ function buildScreeningRules(candidate: RelevanceCandidate): string[] {
       `The candidate's gender: ${candidate.candidateGender}. If the flyer explicitly requires a different gender ` +
         '(e.g. "se busca mujer", "sexo masculino"), score it 0-15 and say so. Do not penalize flyers that state no ' +
         'gender requirement.',
+    );
+  }
+  if (candidate.acceptLowerLevelRoles) {
+    rules.push(
+      'The candidate is also open to lower-level roles in their own field (assistant, junior, auxiliary or ' +
+        'technician positions). Do not apply an overqualification penalty: score a lower-level role in their ' +
+        'field as a good match (60+) unless another requirement disqualifies them.',
+    );
+  }
+  if (candidate.acceptEntryLevelAnyField) {
+    rules.push(
+      'The candidate also accepts general entry-level jobs in any field (e.g. cashier, warehouse, customer ' +
+        'service, sales) that need no specific experience or credentials they lack. Score such a job at least 60 ' +
+        'when no stated requirement disqualifies them, and say it is an entry-level match.',
     );
   }
   return rules;

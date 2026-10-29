@@ -34,7 +34,10 @@ Run `pnpm dashboard:api` and `pnpm dashboard:web`, then open the **Settings** ta
 2. **Country / flyer language** — where the monitored groups post from (default `Honduras` / `Spanish`). Used as a hint in the extraction and relevance prompts; leave both blank to drop the hint.
 3. **Filter flyers by keywords** — on by default: flyers with none of your keywords are skipped before any LLM call. Turn it off if flyers for your field rarely share clear keywords; every flyer is then extracted and scored (no keyword misses, more API calls).
 4. **Candidate gender** — `Not specified` by default. When set, flyers that explicitly ask for a different gender (common on local flyers) get a low score with the reason stated. It is never inferred from the CV.
-5. **Notification threshold** — minimum relevance score (0-100) that triggers a WhatsApp notification.
+5. **Also look for jobs below my qualifications** — two independent switches, both off by default:
+   - **Lower-level roles in my field** — assistant/junior/auxiliary roles in the candidate's field are not penalized for overqualification. Turn it on *before* Generate from CV so the draft also includes those job titles as keywords.
+   - **Entry-level jobs in any field** — general jobs needing no specific experience (cashier, warehouse, customer service, sales…) are scored as acceptable matches, and a built-in entry-level keyword list (`ENTRY_LEVEL_KEYWORDS_*` in `src/extraction/keywords.ts`) lets those flyers through the keyword filter. Expect many more notifications.
+6. **Notification threshold** — minimum relevance score (0-100) that triggers a WhatsApp notification.
 
 Settings apply live; the bot doesn't need a restart.
 
