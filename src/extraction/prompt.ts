@@ -19,6 +19,7 @@ export function buildExtractionPrompt(region: JobRegion): string {
   return (
     `Extract structured job posting data from this flyer image (a WhatsApp job listing${regionHint ? `, ${regionHint}` : ''}). ` +
     'Use null for any field not present in the image; use an empty array if no requirements ' +
-    'are listed. Keep extracted text in its original language — do not translate.'
+    'are listed. Include any stated gender or age requirement as its own requirements entry. Keep extracted ' +
+    'text in its original language — do not translate.'
   );
 }

@@ -9,6 +9,10 @@ test('extraction prompt names the configured country and language', () => {
   assert.ok(!prompt.includes('Honduras'));
 });
 
+test('extraction prompt keeps stated gender and age requirements', () => {
+  assert.match(buildExtractionPrompt({ country: 'Honduras', language: 'Spanish' }), /gender or age requirement/i);
+});
+
 test('extraction prompt omits the region hint when country and language are blank', () => {
   const prompt = buildExtractionPrompt({ country: ' ', language: '' });
 

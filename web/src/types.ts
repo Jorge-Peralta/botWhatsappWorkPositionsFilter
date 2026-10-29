@@ -50,6 +50,9 @@ export interface Settings {
   country: string;
   language: string;
   keywordFilterEnabled: boolean;
+  candidateGender: CandidateGender;
 }
+
+export type CandidateGender = 'unspecified' | 'female' | 'male';
 
 export type CvProfileDraft = Pick<Settings, 'profile' | 'keywordsEs' | 'keywordsEn' | 'skillKeywords' | 'acronyms'>;
