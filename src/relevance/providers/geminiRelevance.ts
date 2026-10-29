@@ -45,7 +45,7 @@ export async function scoreRelevance(input: DispatchRelevanceInput): Promise<Rel
         {
           role: 'user',
           parts: [
-            { text: buildRelevancePrompt(input.examples, input.profile, input.region) },
+            { text: buildRelevancePrompt(input.examples, input.candidate) },
             { text: formatJobForRelevancePrompt(input) },
           ],
         },

@@ -18,7 +18,13 @@ export interface SettingsRow {
   // When false, the keyword lists stop gating flyers: every flyer is sent to
   // vision extraction and relevance scoring (more API calls, no keyword misses).
   keywordFilterEnabled: boolean;
+  // Only set by the candidate themselves (never inferred from a CV); lets the
+  // scorer penalize flyers that explicitly require a different gender.
+  candidateGender: CandidateGender;
 }
+
+export const CANDIDATE_GENDERS = ['unspecified', 'female', 'male'] as const;
+export type CandidateGender = (typeof CANDIDATE_GENDERS)[number];
 
 // Where the monitored groups post from — used to hint the flyer language and
 // location to the extraction and relevance prompts. Blank values omit the hint.
@@ -35,6 +41,7 @@ interface SettingsDbRow {
   country: string;
   language: string;
   keyword_filter_enabled: number;
+  candidate_gender: string;
   updated_at: string;
 }
 
@@ -55,7 +62,12 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   country: 'Honduras',
   language: 'Spanish',
   keywordFilterEnabled: true,
+  candidateGender: 'unspecified',
 };
+
+function toCandidateGender(value: string): CandidateGender {
+  return (CANDIDATE_GENDERS as readonly string[]).includes(value) ? (value as CandidateGender) : 'unspecified';
+}
 
 function mapRow(row: SettingsDbRow): SettingsRow {
   return {
@@ -68,6 +80,7 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     country: row.country,
     language: row.language,
     keywordFilterEnabled: row.keyword_filter_enabled === 1,
+    candidateGender: toCandidateGender(row.candidate_gender),
   };
 }
 
@@ -92,7 +105,8 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
   db.prepare(
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
-         country = ?, language = ?, keyword_filter_enabled = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         country = ?, language = ?, keyword_filter_enabled = ?,
+         candidate_gender = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -104,6 +118,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     merged.country,
     merged.language,
     merged.keywordFilterEnabled ? 1 : 0,
+    merged.candidateGender,
   );
 
   return getSettings();

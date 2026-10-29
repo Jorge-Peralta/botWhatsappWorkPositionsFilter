@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS settings (
   country        TEXT NOT NULL DEFAULT 'Honduras',
   language       TEXT NOT NULL DEFAULT 'Spanish',
   keyword_filter_enabled INTEGER NOT NULL DEFAULT 1,  -- boolean
+  candidate_gender TEXT NOT NULL DEFAULT 'unspecified',
   updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
@@ -84,6 +85,10 @@ const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
     column: 'keyword_filter_enabled',
     ddl: 'ALTER TABLE settings ADD COLUMN keyword_filter_enabled INTEGER NOT NULL DEFAULT 1',
   },
+  {
+    column: 'candidate_gender',
+    ddl: "ALTER TABLE settings ADD COLUMN candidate_gender TEXT NOT NULL DEFAULT 'unspecified'",
+  },
 ];
 
 function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
@@ -108,8 +113,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
   if (existing) return;
 
   db.prepare(
-    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled, candidate_gender)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
@@ -120,6 +125,7 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     DEFAULT_SETTINGS.country,
     DEFAULT_SETTINGS.language,
     DEFAULT_SETTINGS.keywordFilterEnabled ? 1 : 0,
+    DEFAULT_SETTINGS.candidateGender,
   );
   log.info('seeded default settings row');
 }

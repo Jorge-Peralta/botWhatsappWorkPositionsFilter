@@ -38,6 +38,12 @@ test('existing settings row gains default country/language and keeps its data', 
   assert.equal(settings.country, 'Honduras');
   assert.equal(settings.language, 'Spanish');
   assert.equal(settings.keywordFilterEnabled, true);
+  assert.equal(settings.candidateGender, 'unspecified');
+});
+
+test('updateSettings persists the candidate gender', () => {
+  store.updateSettings({ candidateGender: 'female' });
+  assert.equal(store.getSettings().candidateGender, 'female');
 });
 
 test('updateSettings persists the keyword filter toggle', () => {

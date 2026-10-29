@@ -21,7 +21,8 @@ export interface ScoreJobRelevanceInput {
  * call so dashboard edits apply live without restarting the process.
  */
 export async function scoreJobRelevance(input: ScoreJobRelevanceInput): Promise<RelevanceOutcome> {
-  const { profile, threshold, country, language } = getSettings();
+  const settings = getSettings();
+  const { threshold } = settings;
 
   const providerApiKeyConfigured =
     config.extractionProvider === 'anthropic' ? config.anthropicApiKey : config.geminiApiKey;
@@ -33,7 +34,7 @@ export async function scoreJobRelevance(input: ScoreJobRelevanceInput): Promise<
 
   try {
     const examples = getFeedbackExamples();
-    const relevance = await dispatchRelevance({ ...input, examples, profile, region: { country, language } });
+    const relevance = await dispatchRelevance({ ...input, examples, candidate: settings });
     return { relevance, relevanceSkippedReason: relevance === null ? 'llm_no_output' : null, notifyThreshold: threshold };
   } catch (err) {
     log.warn({ err }, 'relevance scoring threw an error');

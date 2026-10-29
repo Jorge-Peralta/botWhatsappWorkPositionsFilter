@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchSettings, generateProfileFromCv, updateSettings } from './api.js';
-import type { Settings } from './types.js';
+import type { CandidateGender, Settings } from './types.js';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -16,6 +16,7 @@ interface FormState {
   country: string;
   language: string;
   keywordFilterEnabled: boolean;
+  candidateGender: CandidateGender;
 }
 
 function parseListInput(raw: string): string[] {
@@ -36,6 +37,7 @@ function toFormState(settings: Settings): FormState {
     country: settings.country,
     language: settings.language,
     keywordFilterEnabled: settings.keywordFilterEnabled,
+    candidateGender: settings.candidateGender,
   };
 }
 
@@ -126,6 +128,7 @@ export default function SettingsPanel() {
         country: form.country.trim(),
         language: form.language.trim(),
         keywordFilterEnabled: form.keywordFilterEnabled,
+        candidateGender: form.candidateGender,
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -234,6 +237,25 @@ export default function SettingsPanel() {
             onChange={(e) => updateField('language', e.target.value)}
           />
         </div>
+      </div>
+
+      <div className={fieldWrapperClasses}>
+        <label htmlFor="candidateGender" className={labelClasses}>
+          Candidate gender
+        </label>
+        <select
+          id="candidateGender"
+          className={inputClasses}
+          value={form.candidateGender}
+          onChange={(e) => updateField('candidateGender', e.target.value as CandidateGender)}
+        >
+          <option value="unspecified">Not specified (ignore gender requirements)</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
+        <p className="text-xs text-neutral-500">
+          Flyers that explicitly ask for a different gender get a low score.
+        </p>
       </div>
 
       <div className="flex items-start gap-3">

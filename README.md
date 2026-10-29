@@ -33,7 +33,8 @@ Run `pnpm dashboard:api` and `pnpm dashboard:web`, then open the **Settings** ta
    The draft only fills the form. Review it, complete any `(fill in)` lines (salary floor, dealbreakers, work arrangement), then **Save**.
 2. **Country / flyer language** — where the monitored groups post from (default `Honduras` / `Spanish`). Used as a hint in the extraction and relevance prompts; leave both blank to drop the hint.
 3. **Filter flyers by keywords** — on by default: flyers with none of your keywords are skipped before any LLM call. Turn it off if flyers for your field rarely share clear keywords; every flyer is then extracted and scored (no keyword misses, more API calls).
-4. **Notification threshold** — minimum relevance score (0-100) that triggers a WhatsApp notification.
+4. **Candidate gender** — `Not specified` by default. When set, flyers that explicitly ask for a different gender (common on local flyers) get a low score with the reason stated. It is never inferred from the CV.
+5. **Notification threshold** — minimum relevance score (0-100) that triggers a WhatsApp notification.
 
 Settings apply live; the bot doesn't need a restart.
 
