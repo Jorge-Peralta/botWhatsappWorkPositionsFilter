@@ -6,6 +6,7 @@ export interface Config {
   imagesDir: string;
   groupsFilePath: string;
   targetGroupJids: Set<string>;
+  targetChannels: string[];
   logLevel: string;
   usePairingCode: boolean;
   pairingPhoneNumber: string | undefined;
@@ -54,6 +55,8 @@ export const config: Config = {
   imagesDir,
   groupsFilePath,
   targetGroupJids: parseTargetGroupJids(process.env.TARGET_GROUP_JIDS),
+  // Channel links, invite codes or @newsletter JIDs; resolved on connect (see whatsapp/channels.ts).
+  targetChannels: [...parseTargetGroupJids(process.env.TARGET_CHANNELS)],
   logLevel: process.env.LOG_LEVEL?.trim() || 'info',
   usePairingCode: parseBoolean(process.env.USE_PAIRING_CODE),
   pairingPhoneNumber: process.env.PAIRING_PHONE_NUMBER?.trim() || undefined,

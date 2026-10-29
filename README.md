@@ -65,6 +65,7 @@ All configuration is read from environment variables (see `src/config.ts`). Copy
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Gemini model used for extraction |
 | `MAX_IMAGE_LONG_EDGE` | `1568` | Resize images to this max edge length before sending to the LLM |
 | `TARGET_GROUP_JIDS` | — | Comma-separated WhatsApp group JIDs to monitor |
+| `TARGET_CHANNELS` | — | Comma-separated WhatsApp Channels to monitor: channel links (`https://whatsapp.com/channel/...`, from "Share channel"), invite codes or `@newsletter` JIDs. The linked account must follow them |
 | `USE_PAIRING_CODE` | `false` | Use a pairing code instead of a QR code to link WhatsApp |
 | `PAIRING_PHONE_NUMBER` | — | Phone number to request a pairing code for (if `USE_PAIRING_CODE=true`) |
 | `SESSION_DIR` | `./data/auth` | Where Baileys stores WhatsApp session credentials |

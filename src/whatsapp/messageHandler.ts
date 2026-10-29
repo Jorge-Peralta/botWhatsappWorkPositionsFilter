@@ -1,7 +1,7 @@
 import type { WAMessage, WASocket } from '@whiskeysockets/baileys';
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
-import { config } from '../config.js';
 import { logger } from '../logger.js';
+import { downloadChannelMedia, isMonitoredChat } from './channels.js';
 import * as imageStore from '../storage/imageStore.js';
 import * as jobStore from '../storage/jobStore.js';
 import { extractJobData } from '../extraction/extractJobData.js';
@@ -40,7 +40,7 @@ export function extractImageMessage(msg: WAMessage) {
 }
 
 /**
- * Downloads and saves a message's image if it's from a whitelisted group.
+ * Downloads and saves a message's image if it's from a whitelisted group or channel.
  * Shared by the live `messages.upsert` handler and history-backfill scripts
  * (see src/scripts/testCaptureFromHistory.ts) so both paths exercise the
  * exact same capture logic.
@@ -53,19 +53,20 @@ export async function captureImageIfMatch(sock: WASocket, msg: WAMessage): Promi
   // fromMe is always false anyway. Skipping it would also break testing in
   // single-member groups where the bot's own number is the only sender.
   const remoteJid = msg.key.remoteJid;
-  if (!remoteJid || !remoteJid.endsWith('@g.us')) return false;
-  if (!config.targetGroupJids.has(remoteJid)) return false;
+  if (!remoteJid || !isMonitoredChat(remoteJid)) return false;
 
   const imageMessage = extractImageMessage(msg);
   if (!imageMessage) return false;
 
   try {
-    const buffer = (await downloadMediaMessage(
-      msg,
-      'buffer',
-      {},
-      { logger: log, reuploadRequest: sock.updateMediaMessage },
-    )) as Buffer;
+    const buffer = remoteJid.endsWith('@newsletter')
+      ? await downloadChannelMedia(imageMessage)
+      : ((await downloadMediaMessage(
+          msg,
+          'buffer',
+          {},
+          { logger: log, reuploadRequest: sock.updateMediaMessage },
+        )) as Buffer);
 
     const { imagePath, metadataPath } = await imageStore.save({
       groupJid: remoteJid,
