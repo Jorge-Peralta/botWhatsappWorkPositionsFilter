@@ -45,7 +45,8 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     isStringArray(payload.skillKeywords) &&
     isStringArray(payload.acronyms) &&
     typeof payload.country === 'string' &&
-    typeof payload.language === 'string'
+    typeof payload.language === 'string' &&
+    typeof payload.keywordFilterEnabled === 'boolean'
   );
 }
 

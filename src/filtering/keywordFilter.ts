@@ -3,7 +3,7 @@ import { getSettings } from '../storage/settingsStore.js';
 import type { ExtractedJobData, OcrPreFilterResult } from '../extraction/types.js';
 
 export interface KeywordFilterResult {
-  keywordMatch: boolean | null; // null = insufficient data to decide
+  keywordMatch: boolean | null; // null = insufficient data to decide, or filter disabled
   matchedKeyword: string | null;
 }
 
@@ -21,6 +21,12 @@ export interface EvaluateKeywordFilterInput {
  */
 export function evaluateKeywordFilter(input: EvaluateKeywordFilterInput): KeywordFilterResult {
   const settings = getSettings();
+  // Abstaining (null) keeps the flyer as 'new' so it still reaches relevance
+  // scoring; a false here would discard it as a non-match.
+  if (!settings.keywordFilterEnabled) {
+    return { keywordMatch: null, matchedKeyword: null };
+  }
+
   const keywordSets = {
     keywordsEs: settings.keywordsEs,
     keywordsEn: settings.keywordsEn,

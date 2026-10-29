@@ -15,6 +15,7 @@ interface FormState {
   acronyms: string;
   country: string;
   language: string;
+  keywordFilterEnabled: boolean;
 }
 
 function parseListInput(raw: string): string[] {
@@ -34,6 +35,7 @@ function toFormState(settings: Settings): FormState {
     acronyms: settings.acronyms.join(', '),
     country: settings.country,
     language: settings.language,
+    keywordFilterEnabled: settings.keywordFilterEnabled,
   };
 }
 
@@ -123,6 +125,7 @@ export default function SettingsPanel() {
         acronyms: parseListInput(form.acronyms),
         country: form.country.trim(),
         language: form.language.trim(),
+        keywordFilterEnabled: form.keywordFilterEnabled,
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -231,6 +234,23 @@ export default function SettingsPanel() {
             onChange={(e) => updateField('language', e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="flex items-start gap-3">
+        <input
+          id="keywordFilterEnabled"
+          type="checkbox"
+          className="mt-1 h-4 w-4"
+          checked={form.keywordFilterEnabled}
+          onChange={(e) => updateField('keywordFilterEnabled', e.target.checked)}
+        />
+        <label htmlFor="keywordFilterEnabled" className="text-sm">
+          <span className="font-medium">Filter flyers by keywords</span>
+          <span className="block text-xs text-neutral-500">
+            When off, every flyer is extracted and scored by the LLM — no keyword misses, but more API calls. Turn it
+            off if flyers for your field rarely share clear keywords.
+          </span>
+        </label>
       </div>
 
       <div className={fieldWrapperClasses}>

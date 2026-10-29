@@ -49,6 +49,7 @@ export interface Settings {
   acronyms: string[];
   country: string;
   language: string;
+  keywordFilterEnabled: boolean;
 }
 
 export type CvProfileDraft = Pick<Settings, 'profile' | 'keywordsEs' | 'keywordsEn' | 'skillKeywords' | 'acronyms'>;

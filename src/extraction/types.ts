@@ -4,7 +4,7 @@ export interface OcrPreFilterResult {
   hasKeyword: boolean;
   matchedKeyword: string | null;
   decision: 'skip' | 'proceed';
-  reason: 'keyword_match' | 'low_confidence_or_sparse_text' | 'no_keywords_high_confidence';
+  reason: 'keyword_match' | 'keyword_filter_disabled' | 'low_confidence_or_sparse_text' | 'no_keywords_high_confidence';
 }
 
 export interface ExtractedJobData {
