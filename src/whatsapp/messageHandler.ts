@@ -129,14 +129,15 @@ export async function captureImageIfMatch(sock: WASocket, msg: WAMessage): Promi
 
         if (relevanceOutcome.relevance && relevanceOutcome.relevance.score >= relevanceOutcome.notifyThreshold) {
           try {
-            const sendImageToSelf = createSafeImageSender(sock);
-            await sendImageToSelf(
+            const { notificationLanguage, notifyNumbers } = getSettings();
+            const sendImageToRecipients = createSafeImageSender(sock, notifyNumbers);
+            await sendImageToRecipients(
               buffer,
               formatMatchNotification({
                 jobId,
                 extracted: extractionResult.extracted,
                 relevance: relevanceOutcome.relevance,
-                language: getSettings().notificationLanguage,
+                language: notificationLanguage,
               }),
             );
             jobStore.markNotified(jobId);

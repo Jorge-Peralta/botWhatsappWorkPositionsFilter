@@ -54,6 +54,7 @@ export interface Settings {
   acceptLowerLevelRoles: boolean;
   acceptEntryLevelAnyField: boolean;
   notificationLanguage: NotificationLanguage;
+  notifyNumbers: string[];
 }
 
 export type CandidateGender = 'unspecified' | 'female' | 'male';

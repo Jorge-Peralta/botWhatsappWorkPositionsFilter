@@ -38,6 +38,7 @@ Run `pnpm dashboard:api` and `pnpm dashboard:web`, then open the **Settings** ta
    - **Lower-level roles in my field** — assistant/junior/auxiliary roles in the candidate's field are not penalized for overqualification. Turn it on *before* Generate from CV so the draft also includes those job titles as keywords.
    - **Entry-level jobs in any field** — general jobs needing no specific experience (cashier, warehouse, customer service, sales…) are scored as acceptable matches, and a built-in entry-level keyword list (`ENTRY_LEVEL_KEYWORDS_*` in `src/extraction/keywords.ts`) lets those flyers through the keyword filter. Expect many more notifications.
 6. **Notification threshold** — minimum relevance score (0-100) that triggers a WhatsApp notification.
+7. **Also send match notifications to** — extra WhatsApp numbers (one per line, with country code) that receive each match notification after the bot's own number. Empty by default. Debug messages still go only to the bot's own number. Sending to numbers that never messaged the bot raises the ban risk, so have each person message it once first.
 
 Settings apply live; the bot doesn't need a restart.
 
@@ -48,7 +49,7 @@ Settings apply live; the bot doesn't need a restart.
 3. **Filtering** — a fast keyword pass discards obvious non-matches (can be turned off), then an LLM pass scores relevance against the candidate profile — role and skills fit, location, seniority — and returns a reason.
 4. **Deduplication** — reposted flyers are caught via image hashing before they're scored again.
 5. **Storage** — matches are persisted to SQLite (`DB_PATH`), with a status field (`new` / `reviewed` / `applied` / `discarded`).
-6. **Notification & review** — matches are surfaced via a self-WhatsApp message and can be triaged in the React dashboard.
+6. **Notification & review** — matches are surfaced via a self-WhatsApp message (plus any extra numbers set in Settings) and can be triaged in the React dashboard.
 
 ## Configuration
 

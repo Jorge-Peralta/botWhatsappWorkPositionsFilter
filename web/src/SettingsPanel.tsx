@@ -20,6 +20,13 @@ interface FormState {
   acceptLowerLevelRoles: boolean;
   acceptEntryLevelAnyField: boolean;
   notificationLanguage: NotificationLanguage;
+  notifyNumbers: string;
+}
+
+// Mirrors normalizePhoneNumber in src/whatsapp/phoneNumber.ts, which the API
+// enforces on save.
+function isPhoneNumber(raw: string): boolean {
+  return /^\d{8,15}$/.test(raw.replace(/[\s+\-().]/g, ''));
 }
 
 function parseListInput(raw: string): string[] {
@@ -44,6 +51,7 @@ function toFormState(settings: Settings): FormState {
     acceptLowerLevelRoles: settings.acceptLowerLevelRoles,
     acceptEntryLevelAnyField: settings.acceptEntryLevelAnyField,
     notificationLanguage: settings.notificationLanguage,
+    notifyNumbers: settings.notifyNumbers.join('\n'),
   };
 }
 
@@ -80,6 +88,10 @@ export default function SettingsPanel() {
     const thresholdNum = Number(current.threshold);
     if (!Number.isFinite(thresholdNum) || thresholdNum < 0 || thresholdNum > 100) {
       return 'Threshold must be a number between 0 and 100.';
+    }
+    const invalidNumber = parseListInput(current.notifyNumbers).find((entry) => !isPhoneNumber(entry));
+    if (invalidNumber !== undefined) {
+      return `"${invalidNumber}" is not a phone number. Use the full number with country code, e.g. +504 9999 8888.`;
     }
     return null;
   }
@@ -138,6 +150,7 @@ export default function SettingsPanel() {
         acceptLowerLevelRoles: form.acceptLowerLevelRoles,
         acceptEntryLevelAnyField: form.acceptEntryLevelAnyField,
         notificationLanguage: form.notificationLanguage,
+        notifyNumbers: parseListInput(form.notifyNumbers),
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -282,6 +295,23 @@ export default function SettingsPanel() {
         </select>
         <p className="text-xs text-neutral-500">
           Language of the WhatsApp match messages and of the match reasoning.
+        </p>
+      </div>
+
+      <div className={fieldWrapperClasses}>
+        <label htmlFor="notifyNumbers" className={labelClasses}>
+          Also send match notifications to
+        </label>
+        <textarea
+          id="notifyNumbers"
+          className={`${textareaClasses} min-h-[80px]`}
+          placeholder="+504 9999 8888"
+          value={form.notifyNumbers}
+          onChange={(e) => updateField('notifyNumbers', e.target.value)}
+        />
+        <p className="text-xs text-neutral-500">
+          One WhatsApp number per line, with country code. The bot's own number always gets them. To lower the ban
+          risk, have each person message the bot's number once before adding them.
         </p>
       </div>
 

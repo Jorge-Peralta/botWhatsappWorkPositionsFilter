@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS settings (
   accept_lower_level_roles     INTEGER NOT NULL DEFAULT 0,  -- boolean
   accept_entry_level_any_field INTEGER NOT NULL DEFAULT 0,  -- boolean
   notification_language TEXT NOT NULL DEFAULT 'en',
-  updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  notify_numbers TEXT NOT NULL DEFAULT '[]',  -- JSON array
+  updated_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
 
@@ -104,6 +105,7 @@ const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
     column: 'notification_language',
     ddl: "ALTER TABLE settings ADD COLUMN notification_language TEXT NOT NULL DEFAULT 'en'",
   },
+  { column: 'notify_numbers', ddl: "ALTER TABLE settings ADD COLUMN notify_numbers TEXT NOT NULL DEFAULT '[]'" },
 ];
 
 function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
@@ -129,8 +131,8 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
 
   db.prepare(
     `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled, candidate_gender,
-       accept_lower_level_roles, accept_entry_level_any_field, notification_language)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       accept_lower_level_roles, accept_entry_level_any_field, notification_language, notify_numbers)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
@@ -145,6 +147,7 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     DEFAULT_SETTINGS.acceptLowerLevelRoles ? 1 : 0,
     DEFAULT_SETTINGS.acceptEntryLevelAnyField ? 1 : 0,
     DEFAULT_SETTINGS.notificationLanguage,
+    JSON.stringify(DEFAULT_SETTINGS.notifyNumbers),
   );
   log.info('seeded default settings row');
 }
