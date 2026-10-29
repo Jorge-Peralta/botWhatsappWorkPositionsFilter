@@ -33,8 +33,10 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     payload.threshold <= 100 &&
     isStringArray(payload.keywordsEs) &&
     isStringArray(payload.keywordsEn) &&
-    isStringArray(payload.techKeywords) &&
-    isStringArray(payload.acronyms)
+    isStringArray(payload.skillKeywords) &&
+    isStringArray(payload.acronyms) &&
+    typeof payload.country === 'string' &&
+    typeof payload.language === 'string'
   );
 }
 

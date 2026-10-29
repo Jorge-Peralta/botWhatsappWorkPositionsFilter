@@ -18,7 +18,7 @@ const GEMINI_RELEVANCE_SCHEMA: Schema = {
     reasoning: {
       type: Type.STRING,
       description:
-        'One to two sentence explanation for the score, citing specific profile fit or mismatch (stack, location, seniority).',
+        'One to two sentence explanation for the score, citing specific profile fit or mismatch (role, skills, location, seniority).',
     },
   },
   required: ['score', 'reasoning'],
@@ -45,7 +45,7 @@ export async function scoreRelevance(input: DispatchRelevanceInput): Promise<Rel
         {
           role: 'user',
           parts: [
-            { text: buildRelevancePrompt(input.examples, input.profile) },
+            { text: buildRelevancePrompt(input.examples, input.profile, input.region) },
             { text: formatJobForRelevancePrompt(input) },
           ],
         },

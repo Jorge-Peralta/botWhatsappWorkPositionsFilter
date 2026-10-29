@@ -1,7 +1,6 @@
 import { GoogleGenAI, Type, type Schema } from '@google/genai';
 import { config } from '../../config.js';
 import { logger } from '../../logger.js';
-import { EXTRACTION_PROMPT } from '../prompt.js';
 import type { ResizedImage } from '../imageResize.js';
 import type { ExtractedJobData } from '../types.js';
 
@@ -60,7 +59,7 @@ function getClient(): GoogleGenAI {
   return client;
 }
 
-export async function extractWithVision(image: ResizedImage): Promise<ExtractedJobData | null> {
+export async function extractWithVision(image: ResizedImage, prompt: string): Promise<ExtractedJobData | null> {
   try {
     const geminiClient = getClient();
 
@@ -70,7 +69,7 @@ export async function extractWithVision(image: ResizedImage): Promise<ExtractedJ
         {
           role: 'user',
           parts: [
-            { text: EXTRACTION_PROMPT },
+            { text: prompt },
             { inlineData: { data: image.base64, mimeType: image.mediaType } },
           ],
         },
