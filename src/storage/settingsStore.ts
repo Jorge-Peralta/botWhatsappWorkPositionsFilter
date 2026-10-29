@@ -26,10 +26,16 @@ export interface SettingsRow {
   // field (also matched by the built-in ENTRY_LEVEL_KEYWORDS).
   acceptLowerLevelRoles: boolean;
   acceptEntryLevelAnyField: boolean;
+  // Language of the WhatsApp match notification and of the relevance
+  // reasoning it quotes. Independent of `language`, which is the flyers' one.
+  notificationLanguage: NotificationLanguage;
 }
 
 export const CANDIDATE_GENDERS = ['unspecified', 'female', 'male'] as const;
 export type CandidateGender = (typeof CANDIDATE_GENDERS)[number];
+
+export const NOTIFICATION_LANGUAGES = ['en', 'es'] as const;
+export type NotificationLanguage = (typeof NOTIFICATION_LANGUAGES)[number];
 
 // Where the monitored groups post from — used to hint the flyer language and
 // location to the extraction and relevance prompts. Blank values omit the hint.
@@ -49,6 +55,7 @@ interface SettingsDbRow {
   candidate_gender: string;
   accept_lower_level_roles: number;
   accept_entry_level_any_field: number;
+  notification_language: string;
   updated_at: string;
 }
 
@@ -72,10 +79,15 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   candidateGender: 'unspecified',
   acceptLowerLevelRoles: false,
   acceptEntryLevelAnyField: false,
+  notificationLanguage: 'en',
 };
 
 function toCandidateGender(value: string): CandidateGender {
   return (CANDIDATE_GENDERS as readonly string[]).includes(value) ? (value as CandidateGender) : 'unspecified';
+}
+
+function toNotificationLanguage(value: string): NotificationLanguage {
+  return (NOTIFICATION_LANGUAGES as readonly string[]).includes(value) ? (value as NotificationLanguage) : 'en';
 }
 
 function mapRow(row: SettingsDbRow): SettingsRow {
@@ -92,6 +104,7 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     candidateGender: toCandidateGender(row.candidate_gender),
     acceptLowerLevelRoles: row.accept_lower_level_roles === 1,
     acceptEntryLevelAnyField: row.accept_entry_level_any_field === 1,
+    notificationLanguage: toNotificationLanguage(row.notification_language),
   };
 }
 
@@ -117,7 +130,8 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
          country = ?, language = ?, keyword_filter_enabled = ?,
-         candidate_gender = ?, accept_lower_level_roles = ?, accept_entry_level_any_field = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         candidate_gender = ?, accept_lower_level_roles = ?, accept_entry_level_any_field = ?,
+         notification_language = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
@@ -132,6 +146,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     merged.candidateGender,
     merged.acceptLowerLevelRoles ? 1 : 0,
     merged.acceptEntryLevelAnyField ? 1 : 0,
+    merged.notificationLanguage,
   );
 
   return getSettings();

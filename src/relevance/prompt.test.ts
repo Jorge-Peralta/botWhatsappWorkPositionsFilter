@@ -11,7 +11,16 @@ const candidate: RelevanceCandidate = {
   candidateGender: 'unspecified',
   acceptLowerLevelRoles: false,
   acceptEntryLevelAnyField: false,
+  notificationLanguage: 'en',
 };
+
+test('relevance reasoning is requested in the notification language', () => {
+  assert.match(buildRelevancePrompt(noExamples, candidate), /Write the reasoning in English/);
+  assert.match(
+    buildRelevancePrompt(noExamples, { ...candidate, notificationLanguage: 'es' }),
+    /Write the reasoning in Spanish/,
+  );
+});
 
 test('relevance prompt is profession-neutral and embeds the profile', () => {
   const prompt = buildRelevancePrompt(noExamples, candidate);

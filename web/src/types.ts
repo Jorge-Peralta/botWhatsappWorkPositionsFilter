@@ -53,8 +53,11 @@ export interface Settings {
   candidateGender: CandidateGender;
   acceptLowerLevelRoles: boolean;
   acceptEntryLevelAnyField: boolean;
+  notificationLanguage: NotificationLanguage;
 }
 
 export type CandidateGender = 'unspecified' | 'female' | 'male';
+
+export type NotificationLanguage = 'en' | 'es';
 
 export type CvProfileDraft = Pick<Settings, 'profile' | 'keywordsEs' | 'keywordsEn' | 'skillKeywords' | 'acronyms'>;

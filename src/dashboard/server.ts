@@ -5,7 +5,13 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { initDb } from '../storage/db.js';
 import { getJobById, listJobs, updateStatus, type JobRow, type JobStatus } from '../storage/jobStore.js';
-import { CANDIDATE_GENDERS, getSettings, updateSettings, type SettingsRow } from '../storage/settingsStore.js';
+import {
+  CANDIDATE_GENDERS,
+  NOTIFICATION_LANGUAGES,
+  getSettings,
+  updateSettings,
+  type SettingsRow,
+} from '../storage/settingsStore.js';
 import { parseCvUpload } from '../profile/cvUpload.js';
 import { generateProfileFromCv } from '../profile/generateProfileFromCv.js';
 import type { ExtractedJobData } from '../extraction/types.js';
@@ -49,7 +55,8 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     typeof payload.keywordFilterEnabled === 'boolean' &&
     (CANDIDATE_GENDERS as readonly unknown[]).includes(payload.candidateGender) &&
     typeof payload.acceptLowerLevelRoles === 'boolean' &&
-    typeof payload.acceptEntryLevelAnyField === 'boolean'
+    typeof payload.acceptEntryLevelAnyField === 'boolean' &&
+    (NOTIFICATION_LANGUAGES as readonly unknown[]).includes(payload.notificationLanguage)
   );
 }
 
