@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Tesseract from 'tesseract.js';
 import { logger } from '../logger.js';
-import { containsItKeyword } from './keywords.js';
+import { containsKeyword, keywordSetsFromSettings, type KeywordSets } from './keywords.js';
 import { getSettings } from '../storage/settingsStore.js';
 import type { OcrPreFilterResult } from './types.js';
 
@@ -32,15 +32,29 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
   const worker = await getWorker();
   const { data } = await worker.recognize(buffer);
 
-  const text = data.text ?? '';
-  const confidence = data.confidence ?? 0;
   const settings = getSettings();
-  const { matched, keyword } = containsItKeyword(text, {
-    keywordsEs: settings.keywordsEs,
-    keywordsEn: settings.keywordsEn,
-    techKeywords: settings.techKeywords,
-    acronyms: settings.acronyms,
+  return classifyOcrText({
+    text: data.text ?? '',
+    confidence: data.confidence ?? 0,
+    keywordSets: keywordSetsFromSettings(settings),
+    keywordFilterEnabled: settings.keywordFilterEnabled,
   });
+}
+
+export interface ClassifyOcrTextInput {
+  text: string;
+  confidence: number;
+  keywordSets: KeywordSets;
+  keywordFilterEnabled: boolean;
+}
+
+/**
+ * Decides from OCR output whether a flyer is worth the paid vision call. The
+ * keyword match is still recorded when the filter is disabled, so
+ * ocr_has_keyword stays informative either way.
+ */
+export function classifyOcrText({ text, confidence, keywordSets, keywordFilterEnabled }: ClassifyOcrTextInput): OcrPreFilterResult {
+  const { matched, keyword } = containsKeyword(text, keywordSets);
 
   if (matched) {
     return {
@@ -50,6 +64,17 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
       matchedKeyword: keyword,
       decision: 'proceed',
       reason: 'keyword_match',
+    };
+  }
+
+  if (!keywordFilterEnabled) {
+    return {
+      text,
+      confidence,
+      hasKeyword: false,
+      matchedKeyword: null,
+      decision: 'proceed',
+      reason: 'keyword_filter_disabled',
     };
   }
 
@@ -64,7 +89,7 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
     };
   }
 
-  log.debug({ confidence, textLength: text.trim().length }, 'OCR pre-filter skipping non-IT flyer');
+  log.debug({ confidence, textLength: text.trim().length }, 'OCR pre-filter skipping flyer with no profile keywords');
   return {
     text,
     confidence,

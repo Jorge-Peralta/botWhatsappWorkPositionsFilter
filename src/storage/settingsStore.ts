@@ -2,7 +2,7 @@ import { getDb } from './db.js';
 import {
   SPANISH_ROLE_KEYWORDS,
   ENGLISH_ROLE_KEYWORDS,
-  TECH_KEYWORDS,
+  SKILL_KEYWORDS,
   CASE_SENSITIVE_ACRONYMS,
 } from '../extraction/keywords.js';
 
@@ -11,9 +11,29 @@ export interface SettingsRow {
   threshold: number;
   keywordsEs: string[];
   keywordsEn: string[];
-  techKeywords: string[];
+  skillKeywords: string[];
   acronyms: string[];
+  country: string;
+  language: string;
+  // When false, the keyword lists stop gating flyers: every flyer is sent to
+  // vision extraction and relevance scoring (more API calls, no keyword misses).
+  keywordFilterEnabled: boolean;
+  // Only set by the candidate themselves (never inferred from a CV); lets the
+  // scorer penalize flyers that explicitly require a different gender.
+  candidateGender: CandidateGender;
+  // Widen the search below the CV: lower-level roles in the candidate's own
+  // field (no overqualification penalty), and general entry-level jobs in any
+  // field (also matched by the built-in ENTRY_LEVEL_KEYWORDS).
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
+
+export const CANDIDATE_GENDERS = ['unspecified', 'female', 'male'] as const;
+export type CandidateGender = (typeof CANDIDATE_GENDERS)[number];
+
+// Where the monitored groups post from — used to hint the flyer language and
+// location to the extraction and relevance prompts. Blank values omit the hint.
+export type JobRegion = Pick<SettingsRow, 'country' | 'language'>;
 
 interface SettingsDbRow {
   id: number;
@@ -23,6 +43,12 @@ interface SettingsDbRow {
   keywords_en: string;
   tech_keywords: string;
   acronyms: string;
+  country: string;
+  language: string;
+  keyword_filter_enabled: number;
+  candidate_gender: string;
+  accept_lower_level_roles: number;
+  accept_entry_level_any_field: number;
   updated_at: string;
 }
 
@@ -38,9 +64,19 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   threshold: 60,
   keywordsEs: SPANISH_ROLE_KEYWORDS,
   keywordsEn: ENGLISH_ROLE_KEYWORDS,
-  techKeywords: TECH_KEYWORDS,
+  skillKeywords: SKILL_KEYWORDS,
   acronyms: CASE_SENSITIVE_ACRONYMS,
+  country: 'Honduras',
+  language: 'Spanish',
+  keywordFilterEnabled: true,
+  candidateGender: 'unspecified',
+  acceptLowerLevelRoles: false,
+  acceptEntryLevelAnyField: false,
 };
+
+function toCandidateGender(value: string): CandidateGender {
+  return (CANDIDATE_GENDERS as readonly string[]).includes(value) ? (value as CandidateGender) : 'unspecified';
+}
 
 function mapRow(row: SettingsDbRow): SettingsRow {
   return {
@@ -48,8 +84,14 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     threshold: row.threshold,
     keywordsEs: JSON.parse(row.keywords_es) as string[],
     keywordsEn: JSON.parse(row.keywords_en) as string[],
-    techKeywords: JSON.parse(row.tech_keywords) as string[],
+    skillKeywords: JSON.parse(row.tech_keywords) as string[],
     acronyms: JSON.parse(row.acronyms) as string[],
+    country: row.country,
+    language: row.language,
+    keywordFilterEnabled: row.keyword_filter_enabled === 1,
+    candidateGender: toCandidateGender(row.candidate_gender),
+    acceptLowerLevelRoles: row.accept_lower_level_roles === 1,
+    acceptEntryLevelAnyField: row.accept_entry_level_any_field === 1,
   };
 }
 
@@ -74,15 +116,22 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
   db.prepare(
     `UPDATE settings
      SET profile = ?, threshold = ?, keywords_es = ?, keywords_en = ?, tech_keywords = ?, acronyms = ?,
-         updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+         country = ?, language = ?, keyword_filter_enabled = ?,
+         candidate_gender = ?, accept_lower_level_roles = ?, accept_entry_level_any_field = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')
      WHERE id = 1`,
   ).run(
     merged.profile,
     merged.threshold,
     JSON.stringify(merged.keywordsEs),
     JSON.stringify(merged.keywordsEn),
-    JSON.stringify(merged.techKeywords),
+    JSON.stringify(merged.skillKeywords),
     JSON.stringify(merged.acronyms),
+    merged.country,
+    merged.language,
+    merged.keywordFilterEnabled ? 1 : 0,
+    merged.candidateGender,
+    merged.acceptLowerLevelRoles ? 1 : 0,
+    merged.acceptEntryLevelAnyField ? 1 : 0,
   );
 
   return getSettings();

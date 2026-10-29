@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema';
 import { logger } from '../../logger.js';
-import { EXTRACTION_PROMPT } from '../prompt.js';
 import { resolveExtractionModel } from '../modelSelector.js';
 import { JOB_EXTRACTION_SCHEMA } from '../schema.js';
 import type { ResizedImage } from '../imageResize.js';
@@ -20,7 +19,7 @@ function getClient(): Anthropic {
   return client;
 }
 
-export async function extractWithVision(image: ResizedImage): Promise<ExtractedJobData | null> {
+export async function extractWithVision(image: ResizedImage, prompt: string): Promise<ExtractedJobData | null> {
   const anthropicClient = getClient();
   const model = await resolveExtractionModel(anthropicClient);
 
@@ -42,7 +41,7 @@ export async function extractWithVision(image: ResizedImage): Promise<ExtractedJ
               data: image.base64,
             },
           },
-          { type: 'text', text: EXTRACTION_PROMPT },
+          { type: 'text', text: prompt },
         ],
       },
     ],

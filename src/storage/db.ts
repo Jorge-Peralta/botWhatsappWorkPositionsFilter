@@ -52,6 +52,12 @@ CREATE TABLE IF NOT EXISTS settings (
   keywords_en    TEXT NOT NULL,  -- JSON array
   tech_keywords  TEXT NOT NULL,  -- JSON array
   acronyms       TEXT NOT NULL,  -- JSON array
+  country        TEXT NOT NULL DEFAULT 'Honduras',
+  language       TEXT NOT NULL DEFAULT 'Spanish',
+  keyword_filter_enabled INTEGER NOT NULL DEFAULT 1,  -- boolean
+  candidate_gender TEXT NOT NULL DEFAULT 'unspecified',
+  accept_lower_level_roles     INTEGER NOT NULL DEFAULT 0,  -- boolean
+  accept_entry_level_any_field INTEGER NOT NULL DEFAULT 0,  -- boolean
   updated_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 `;
@@ -61,20 +67,48 @@ let db: DatabaseSync | null = null;
 // Phase 4 added columns to an already-shipped `jobs` table. CREATE TABLE IF
 // NOT EXISTS won't retrofit columns onto an existing table, so new columns
 // need an explicit, idempotent ALTER TABLE migration on top of the DDL.
-const JOBS_TABLE_MIGRATIONS: { column: string; ddl: string }[] = [
+interface ColumnMigration {
+  column: string;
+  ddl: string;
+}
+
+const JOBS_TABLE_MIGRATIONS: ColumnMigration[] = [
   { column: 'relevance_reasoning', ddl: 'ALTER TABLE jobs ADD COLUMN relevance_reasoning TEXT' },
   { column: 'relevance_skipped_reason', ddl: 'ALTER TABLE jobs ADD COLUMN relevance_skipped_reason TEXT' },
   { column: 'notified_at', ddl: 'ALTER TABLE jobs ADD COLUMN notified_at TEXT' },
 ];
 
-function migrateJobsTable(db: DatabaseSync): void {
+// Defaults match the bot's original hardcoded behavior (region, keyword
+// gate on), so an existing install behaves the same after upgrading.
+const SETTINGS_TABLE_MIGRATIONS: ColumnMigration[] = [
+  { column: 'country', ddl: "ALTER TABLE settings ADD COLUMN country TEXT NOT NULL DEFAULT 'Honduras'" },
+  { column: 'language', ddl: "ALTER TABLE settings ADD COLUMN language TEXT NOT NULL DEFAULT 'Spanish'" },
+  {
+    column: 'keyword_filter_enabled',
+    ddl: 'ALTER TABLE settings ADD COLUMN keyword_filter_enabled INTEGER NOT NULL DEFAULT 1',
+  },
+  {
+    column: 'candidate_gender',
+    ddl: "ALTER TABLE settings ADD COLUMN candidate_gender TEXT NOT NULL DEFAULT 'unspecified'",
+  },
+  {
+    column: 'accept_lower_level_roles',
+    ddl: 'ALTER TABLE settings ADD COLUMN accept_lower_level_roles INTEGER NOT NULL DEFAULT 0',
+  },
+  {
+    column: 'accept_entry_level_any_field',
+    ddl: 'ALTER TABLE settings ADD COLUMN accept_entry_level_any_field INTEGER NOT NULL DEFAULT 0',
+  },
+];
+
+function migrateTable(db: DatabaseSync, table: string, migrations: ColumnMigration[]): void {
   const existingColumns = new Set(
-    (db.prepare('PRAGMA table_info(jobs)').all() as { name: string }[]).map((row) => row.name),
+    (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map((row) => row.name),
   );
-  for (const migration of JOBS_TABLE_MIGRATIONS) {
+  for (const migration of migrations) {
     if (!existingColumns.has(migration.column)) {
       db.exec(migration.ddl);
-      log.info({ column: migration.column }, 'applied jobs table migration');
+      log.info({ table, column: migration.column }, 'applied table migration');
     }
   }
 }
@@ -89,15 +123,22 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
   if (existing) return;
 
   db.prepare(
-    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms)
-     VALUES (1, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO settings (id, profile, threshold, keywords_es, keywords_en, tech_keywords, acronyms, country, language, keyword_filter_enabled, candidate_gender,
+       accept_lower_level_roles, accept_entry_level_any_field)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     DEFAULT_SETTINGS.profile,
     DEFAULT_SETTINGS.threshold,
     JSON.stringify(DEFAULT_SETTINGS.keywordsEs),
     JSON.stringify(DEFAULT_SETTINGS.keywordsEn),
-    JSON.stringify(DEFAULT_SETTINGS.techKeywords),
+    JSON.stringify(DEFAULT_SETTINGS.skillKeywords),
     JSON.stringify(DEFAULT_SETTINGS.acronyms),
+    DEFAULT_SETTINGS.country,
+    DEFAULT_SETTINGS.language,
+    DEFAULT_SETTINGS.keywordFilterEnabled ? 1 : 0,
+    DEFAULT_SETTINGS.candidateGender,
+    DEFAULT_SETTINGS.acceptLowerLevelRoles ? 1 : 0,
+    DEFAULT_SETTINGS.acceptEntryLevelAnyField ? 1 : 0,
   );
   log.info('seeded default settings row');
 }
@@ -112,7 +153,8 @@ export function initDb(): void {
 
   db = new DatabaseSync(config.dbPath);
   db.exec(DDL);
-  migrateJobsTable(db);
+  migrateTable(db, 'jobs', JOBS_TABLE_MIGRATIONS);
+  migrateTable(db, 'settings', SETTINGS_TABLE_MIGRATIONS);
   seedSettingsIfEmpty(db);
 
   log.info({ dbPath: config.dbPath }, 'initialized jobs database');

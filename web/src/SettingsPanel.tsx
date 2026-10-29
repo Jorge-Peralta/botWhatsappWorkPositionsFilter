@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react';
-import { fetchSettings, updateSettings } from './api.js';
-import type { Settings } from './types.js';
+import { fetchSettings, generateProfileFromCv, updateSettings } from './api.js';
+import type { CandidateGender, Settings } from './types.js';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+type CvState = { kind: 'idle' } | { kind: 'generating' } | { kind: 'loaded' } | { kind: 'error'; message: string };
 
 interface FormState {
   profile: string;
   threshold: string;
   keywordsEs: string;
   keywordsEn: string;
-  techKeywords: string;
+  skillKeywords: string;
   acronyms: string;
+  country: string;
+  language: string;
+  keywordFilterEnabled: boolean;
+  candidateGender: CandidateGender;
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
 
 function parseListInput(raw: string): string[] {
@@ -26,8 +34,14 @@ function toFormState(settings: Settings): FormState {
     threshold: String(settings.threshold),
     keywordsEs: settings.keywordsEs.join(', '),
     keywordsEn: settings.keywordsEn.join(', '),
-    techKeywords: settings.techKeywords.join(', '),
+    skillKeywords: settings.skillKeywords.join(', '),
     acronyms: settings.acronyms.join(', '),
+    country: settings.country,
+    language: settings.language,
+    keywordFilterEnabled: settings.keywordFilterEnabled,
+    candidateGender: settings.candidateGender,
+    acceptLowerLevelRoles: settings.acceptLowerLevelRoles,
+    acceptEntryLevelAnyField: settings.acceptEntryLevelAnyField,
   };
 }
 
@@ -36,6 +50,8 @@ export default function SettingsPanel() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvState, setCvState] = useState<CvState>({ kind: 'idle' });
 
   useEffect(() => {
     fetchSettings()
@@ -66,6 +82,33 @@ export default function SettingsPanel() {
     return null;
   }
 
+  // Fills the form with the CV draft but does not save — the candidate reviews
+  // and edits it first, then saves with the normal Save button.
+  async function handleGenerateFromCv() {
+    if (!cvFile || !form) return;
+
+    setCvState({ kind: 'generating' });
+    try {
+      const draft = await generateProfileFromCv(cvFile, { acceptLowerLevelRoles: form.acceptLowerLevelRoles });
+      setForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              profile: draft.profile,
+              keywordsEs: draft.keywordsEs.join(', '),
+              keywordsEn: draft.keywordsEn.join(', '),
+              skillKeywords: draft.skillKeywords.join(', '),
+              acronyms: draft.acronyms.join(', '),
+            }
+          : prev,
+      );
+      setSaveState('idle');
+      setCvState({ kind: 'loaded' });
+    } catch (err) {
+      setCvState({ kind: 'error', message: err instanceof Error ? err.message : 'failed to generate profile' });
+    }
+  }
+
   async function handleSave() {
     if (!form) return;
 
@@ -84,8 +127,14 @@ export default function SettingsPanel() {
         threshold: Number(form.threshold),
         keywordsEs: parseListInput(form.keywordsEs),
         keywordsEn: parseListInput(form.keywordsEn),
-        techKeywords: parseListInput(form.techKeywords),
+        skillKeywords: parseListInput(form.skillKeywords),
         acronyms: parseListInput(form.acronyms),
+        country: form.country.trim(),
+        language: form.language.trim(),
+        keywordFilterEnabled: form.keywordFilterEnabled,
+        candidateGender: form.candidateGender,
+        acceptLowerLevelRoles: form.acceptLowerLevelRoles,
+        acceptEntryLevelAnyField: form.acceptEntryLevelAnyField,
       });
       setForm(toFormState(saved));
       setSaveState('saved');
@@ -99,9 +148,47 @@ export default function SettingsPanel() {
   const textareaClasses =
     'w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm font-mono min-h-[120px] shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white';
   const fieldWrapperClasses = 'space-y-1';
+  const inputClasses =
+    'w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white';
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-4 overflow-y-auto">
+      <div className="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 p-4 space-y-2">
+        <label htmlFor="cvFile" className={labelClasses}>
+          Generate profile and keywords from a CV
+        </label>
+        <p className="text-xs text-neutral-500">
+          PDF, .txt or .md, up to 5 MB. Replaces the profile and keyword fields below with a draft — review it, then
+          Save.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            id="cvFile"
+            type="file"
+            accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+            className="text-sm"
+            onChange={(e) => {
+              setCvFile(e.target.files?.[0] ?? null);
+              setCvState({ kind: 'idle' });
+            }}
+          />
+          <button
+            className="rounded-xl border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-sm font-medium shadow-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50"
+            onClick={() => void handleGenerateFromCv()}
+            disabled={!cvFile || cvState.kind === 'generating'}
+          >
+            Generate from CV
+          </button>
+        </div>
+        {cvState.kind === 'generating' && <p className="text-sm text-neutral-500">Reading CV…</p>}
+        {cvState.kind === 'loaded' && (
+          <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            Draft loaded. Fill in any "(fill in)" lines, then Save.
+          </p>
+        )}
+        {cvState.kind === 'error' && <p className="text-sm text-red-600 dark:text-red-400">{cvState.message}</p>}
+      </div>
+
       <div className={fieldWrapperClasses}>
         <label htmlFor="profile" className={labelClasses}>
           Candidate profile
@@ -123,10 +210,111 @@ export default function SettingsPanel() {
           type="number"
           min={0}
           max={100}
-          className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 text-sm shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          className={inputClasses}
           value={form.threshold}
           onChange={(e) => updateField('threshold', e.target.value)}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={fieldWrapperClasses}>
+          <label htmlFor="country" className={labelClasses}>
+            Country of the job groups
+          </label>
+          <input
+            id="country"
+            type="text"
+            placeholder="e.g. Honduras"
+            className={inputClasses}
+            value={form.country}
+            onChange={(e) => updateField('country', e.target.value)}
+          />
+        </div>
+        <div className={fieldWrapperClasses}>
+          <label htmlFor="language" className={labelClasses}>
+            Flyer language
+          </label>
+          <input
+            id="language"
+            type="text"
+            placeholder="e.g. Spanish"
+            className={inputClasses}
+            value={form.language}
+            onChange={(e) => updateField('language', e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className={fieldWrapperClasses}>
+        <label htmlFor="candidateGender" className={labelClasses}>
+          Candidate gender
+        </label>
+        <select
+          id="candidateGender"
+          className={inputClasses}
+          value={form.candidateGender}
+          onChange={(e) => updateField('candidateGender', e.target.value as CandidateGender)}
+        >
+          <option value="unspecified">Not specified (ignore gender requirements)</option>
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
+        <p className="text-xs text-neutral-500">
+          Flyers that explicitly ask for a different gender get a low score.
+        </p>
+      </div>
+
+      <fieldset className="space-y-3">
+        <legend className={labelClasses}>Also look for jobs below my qualifications</legend>
+        <div className="flex items-start gap-3">
+          <input
+            id="acceptLowerLevelRoles"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={form.acceptLowerLevelRoles}
+            onChange={(e) => updateField('acceptLowerLevelRoles', e.target.checked)}
+          />
+          <label htmlFor="acceptLowerLevelRoles" className="text-sm">
+            <span className="font-medium">Lower-level roles in my field</span>
+            <span className="block text-xs text-neutral-500">
+              Assistant, junior or auxiliary positions are not penalized for overqualification. Turn this on before
+              Generate from CV to also get those job titles as keywords.
+            </span>
+          </label>
+        </div>
+        <div className="flex items-start gap-3">
+          <input
+            id="acceptEntryLevelAnyField"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={form.acceptEntryLevelAnyField}
+            onChange={(e) => updateField('acceptEntryLevelAnyField', e.target.checked)}
+          />
+          <label htmlFor="acceptEntryLevelAnyField" className="text-sm">
+            <span className="font-medium">Entry-level jobs in any field</span>
+            <span className="block text-xs text-neutral-500">
+              Cashier, warehouse, customer service, sales and similar jobs that need no specific experience. Expect
+              many more notifications.
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div className="flex items-start gap-3">
+        <input
+          id="keywordFilterEnabled"
+          type="checkbox"
+          className="mt-1 h-4 w-4"
+          checked={form.keywordFilterEnabled}
+          onChange={(e) => updateField('keywordFilterEnabled', e.target.checked)}
+        />
+        <label htmlFor="keywordFilterEnabled" className="text-sm">
+          <span className="font-medium">Filter flyers by keywords</span>
+          <span className="block text-xs text-neutral-500">
+            When off, every flyer is extracted and scored by the LLM — no keyword misses, but more API calls. Turn it
+            off if flyers for your field rarely share clear keywords.
+          </span>
+        </label>
       </div>
 
       <div className={fieldWrapperClasses}>
@@ -154,14 +342,14 @@ export default function SettingsPanel() {
       </div>
 
       <div className={fieldWrapperClasses}>
-        <label htmlFor="techKeywords" className={labelClasses}>
-          Tech keywords
+        <label htmlFor="skillKeywords" className={labelClasses}>
+          Skill keywords
         </label>
         <textarea
-          id="techKeywords"
+          id="skillKeywords"
           className={textareaClasses}
-          value={form.techKeywords}
-          onChange={(e) => updateField('techKeywords', e.target.value)}
+          value={form.skillKeywords}
+          onChange={(e) => updateField('skillKeywords', e.target.value)}
         />
       </div>
 

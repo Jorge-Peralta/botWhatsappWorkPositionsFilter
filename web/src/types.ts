@@ -45,6 +45,16 @@ export interface Settings {
   threshold: number;
   keywordsEs: string[];
   keywordsEn: string[];
-  techKeywords: string[];
+  skillKeywords: string[];
   acronyms: string[];
+  country: string;
+  language: string;
+  keywordFilterEnabled: boolean;
+  candidateGender: CandidateGender;
+  acceptLowerLevelRoles: boolean;
+  acceptEntryLevelAnyField: boolean;
 }
+
+export type CandidateGender = 'unspecified' | 'female' | 'male';
+
+export type CvProfileDraft = Pick<Settings, 'profile' | 'keywordsEs' | 'keywordsEn' | 'skillKeywords' | 'acronyms'>;

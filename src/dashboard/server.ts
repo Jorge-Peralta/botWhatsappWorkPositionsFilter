@@ -5,10 +5,19 @@ import { config } from '../config.js';
 import { logger } from '../logger.js';
 import { initDb } from '../storage/db.js';
 import { getJobById, listJobs, updateStatus, type JobRow, type JobStatus } from '../storage/jobStore.js';
-import { getSettings, updateSettings, type SettingsRow } from '../storage/settingsStore.js';
+import { CANDIDATE_GENDERS, getSettings, updateSettings, type SettingsRow } from '../storage/settingsStore.js';
+import { parseCvUpload } from '../profile/cvUpload.js';
+import { generateProfileFromCv } from '../profile/generateProfileFromCv.js';
 import type { ExtractedJobData } from '../extraction/types.js';
+import type { CvProfileSkippedReason } from '../profile/types.js';
 
 const log = logger.child({ module: 'dashboardServer' });
+
+const CV_PROFILE_ERRORS: Record<CvProfileSkippedReason, string> = {
+  api_key_not_configured: 'No LLM API key is configured for the selected provider.',
+  llm_no_output: 'The LLM could not draft a profile from this CV. Try another file or a text version.',
+  llm_error: 'Drafting the profile failed. Check the dashboard API logs.',
+};
 
 const VALID_STATUSES: JobStatus[] = ['new', 'reviewed', 'applied', 'discarded'];
 
@@ -33,8 +42,14 @@ function isValidSettingsPayload(body: unknown): body is SettingsRow {
     payload.threshold <= 100 &&
     isStringArray(payload.keywordsEs) &&
     isStringArray(payload.keywordsEn) &&
-    isStringArray(payload.techKeywords) &&
-    isStringArray(payload.acronyms)
+    isStringArray(payload.skillKeywords) &&
+    isStringArray(payload.acronyms) &&
+    typeof payload.country === 'string' &&
+    typeof payload.language === 'string' &&
+    typeof payload.keywordFilterEnabled === 'boolean' &&
+    (CANDIDATE_GENDERS as readonly unknown[]).includes(payload.candidateGender) &&
+    typeof payload.acceptLowerLevelRoles === 'boolean' &&
+    typeof payload.acceptEntryLevelAnyField === 'boolean'
   );
 }
 
@@ -66,6 +81,26 @@ function serializeJob(row: JobRow) {
 initDb();
 
 const app = express();
+
+// Registered before the global JSON parser: a base64-encoded CV (up to
+// MAX_CV_BYTES raw) is far over express.json()'s 100kb default limit.
+app.post('/api/profile/from-cv', express.json({ limit: '8mb' }), async (req: Request, res: Response) => {
+  const upload = parseCvUpload(req.body);
+  if (!upload.ok) {
+    res.status(400).json({ error: upload.error });
+    return;
+  }
+
+  const outcome = await generateProfileFromCv(upload.cv, upload.options);
+  if (!outcome.draft) {
+    const status = outcome.skippedReason === 'api_key_not_configured' ? 503 : 502;
+    res.status(status).json({ error: CV_PROFILE_ERRORS[outcome.skippedReason ?? 'llm_error'] });
+    return;
+  }
+
+  res.json(outcome.draft);
+});
+
 app.use(express.json());
 
 app.get('/api/jobs', (req: Request, res: Response) => {
