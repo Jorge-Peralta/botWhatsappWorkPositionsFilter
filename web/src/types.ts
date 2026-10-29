@@ -50,3 +50,5 @@ export interface Settings {
   country: string;
   language: string;
 }
+
+export type CvProfileDraft = Pick<Settings, 'profile' | 'keywordsEs' | 'keywordsEn' | 'skillKeywords' | 'acronyms'>;
