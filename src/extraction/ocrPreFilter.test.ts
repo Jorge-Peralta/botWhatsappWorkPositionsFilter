@@ -1,6 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyOcrText } from './ocrPreFilter.js';
+import { classifyOcrText, ocrLanguagesFor } from './ocrPreFilter.js';
+
+test('OCR languages follow the profile language and always include English', () => {
+  assert.deepEqual(ocrLanguagesFor('Spanish'), ['spa', 'eng']);
+  assert.deepEqual(ocrLanguagesFor(' español '), ['spa', 'eng']);
+  assert.deepEqual(ocrLanguagesFor('Portuguese'), ['por', 'eng']);
+  assert.deepEqual(ocrLanguagesFor('English'), ['eng']);
+  assert.deepEqual(ocrLanguagesFor('fra'), ['fra', 'eng']);
+});
+
+test('OCR falls back to English for a blank or unknown profile language', () => {
+  assert.deepEqual(ocrLanguagesFor(''), ['eng']);
+  assert.deepEqual(ocrLanguagesFor('Klingon'), ['eng']);
+});
 
 const keywordSets = { keywordsEs: ['enfermera'], keywordsEn: [], skillKeywords: [], acronyms: [] };
 const clearNonMatchingText = 'Se busca vendedor de ruta con licencia de conducir vigente';
