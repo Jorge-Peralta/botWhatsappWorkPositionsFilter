@@ -66,15 +66,19 @@ export const CASE_SENSITIVE_ACRONYMS = ['TI', 'IT'];
 // candidate accepts entry-level jobs in any field.
 export const ENTRY_LEVEL_KEYWORDS_ES = [
   'cajero',
+  'cajeros',
   'cajera',
+  'mesero',
+  'meseros',
+  'mesera',
+  'digitador',
+  'digitadora',
   'bodeguero',
   'bodeguera',
   'atencion al cliente',
   'servicio al cliente',
   'vendedor',
   'vendedora',
-  'mesero',
-  'mesera',
   'impulsador',
   'impulsadora',
   'ayudante',
@@ -91,8 +95,9 @@ export const ENTRY_LEVEL_KEYWORDS_ES = [
   'call center',
   'sin experiencia',
   'primer empleo',
-  'Secundaria completa',
-  'Secundaria',
+  'secundaria completa',
+  'secundaria',
+  'motorista',
 ];
 
 export const ENTRY_LEVEL_KEYWORDS_EN = [
