@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Tesseract from 'tesseract.js';
 import { logger } from '../logger.js';
-import { containsItKeyword } from './keywords.js';
+import { containsKeyword } from './keywords.js';
 import { getSettings } from '../storage/settingsStore.js';
 import type { OcrPreFilterResult } from './types.js';
 
@@ -35,10 +35,10 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
   const text = data.text ?? '';
   const confidence = data.confidence ?? 0;
   const settings = getSettings();
-  const { matched, keyword } = containsItKeyword(text, {
+  const { matched, keyword } = containsKeyword(text, {
     keywordsEs: settings.keywordsEs,
     keywordsEn: settings.keywordsEn,
-    techKeywords: settings.techKeywords,
+    skillKeywords: settings.skillKeywords,
     acronyms: settings.acronyms,
   });
 
@@ -64,7 +64,7 @@ export async function runOcrPreFilter(buffer: Buffer): Promise<OcrPreFilterResul
     };
   }
 
-  log.debug({ confidence, textLength: text.trim().length }, 'OCR pre-filter skipping non-IT flyer');
+  log.debug({ confidence, textLength: text.trim().length }, 'OCR pre-filter skipping flyer with no profile keywords');
   return {
     text,
     confidence,

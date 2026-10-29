@@ -96,7 +96,7 @@ function seedSettingsIfEmpty(db: DatabaseSync): void {
     DEFAULT_SETTINGS.threshold,
     JSON.stringify(DEFAULT_SETTINGS.keywordsEs),
     JSON.stringify(DEFAULT_SETTINGS.keywordsEn),
-    JSON.stringify(DEFAULT_SETTINGS.techKeywords),
+    JSON.stringify(DEFAULT_SETTINGS.skillKeywords),
     JSON.stringify(DEFAULT_SETTINGS.acronyms),
   );
   log.info('seeded default settings row');

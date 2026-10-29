@@ -9,7 +9,7 @@ interface FormState {
   threshold: string;
   keywordsEs: string;
   keywordsEn: string;
-  techKeywords: string;
+  skillKeywords: string;
   acronyms: string;
 }
 
@@ -26,7 +26,7 @@ function toFormState(settings: Settings): FormState {
     threshold: String(settings.threshold),
     keywordsEs: settings.keywordsEs.join(', '),
     keywordsEn: settings.keywordsEn.join(', '),
-    techKeywords: settings.techKeywords.join(', '),
+    skillKeywords: settings.skillKeywords.join(', '),
     acronyms: settings.acronyms.join(', '),
   };
 }
@@ -84,7 +84,7 @@ export default function SettingsPanel() {
         threshold: Number(form.threshold),
         keywordsEs: parseListInput(form.keywordsEs),
         keywordsEn: parseListInput(form.keywordsEn),
-        techKeywords: parseListInput(form.techKeywords),
+        skillKeywords: parseListInput(form.skillKeywords),
         acronyms: parseListInput(form.acronyms),
       });
       setForm(toFormState(saved));
@@ -154,14 +154,14 @@ export default function SettingsPanel() {
       </div>
 
       <div className={fieldWrapperClasses}>
-        <label htmlFor="techKeywords" className={labelClasses}>
-          Tech keywords
+        <label htmlFor="skillKeywords" className={labelClasses}>
+          Skill keywords
         </label>
         <textarea
-          id="techKeywords"
+          id="skillKeywords"
           className={textareaClasses}
-          value={form.techKeywords}
-          onChange={(e) => updateField('techKeywords', e.target.value)}
+          value={form.skillKeywords}
+          onChange={(e) => updateField('skillKeywords', e.target.value)}
         />
       </div>
 

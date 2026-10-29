@@ -2,7 +2,7 @@ import { getDb } from './db.js';
 import {
   SPANISH_ROLE_KEYWORDS,
   ENGLISH_ROLE_KEYWORDS,
-  TECH_KEYWORDS,
+  SKILL_KEYWORDS,
   CASE_SENSITIVE_ACRONYMS,
 } from '../extraction/keywords.js';
 
@@ -11,7 +11,7 @@ export interface SettingsRow {
   threshold: number;
   keywordsEs: string[];
   keywordsEn: string[];
-  techKeywords: string[];
+  skillKeywords: string[];
   acronyms: string[];
 }
 
@@ -38,7 +38,7 @@ export const DEFAULT_SETTINGS: SettingsRow = {
   threshold: 60,
   keywordsEs: SPANISH_ROLE_KEYWORDS,
   keywordsEn: ENGLISH_ROLE_KEYWORDS,
-  techKeywords: TECH_KEYWORDS,
+  skillKeywords: SKILL_KEYWORDS,
   acronyms: CASE_SENSITIVE_ACRONYMS,
 };
 
@@ -48,7 +48,7 @@ function mapRow(row: SettingsDbRow): SettingsRow {
     threshold: row.threshold,
     keywordsEs: JSON.parse(row.keywords_es) as string[],
     keywordsEn: JSON.parse(row.keywords_en) as string[],
-    techKeywords: JSON.parse(row.tech_keywords) as string[],
+    skillKeywords: JSON.parse(row.tech_keywords) as string[],
     acronyms: JSON.parse(row.acronyms) as string[],
   };
 }
@@ -81,7 +81,7 @@ export function updateSettings(patch: Partial<SettingsRow>): SettingsRow {
     merged.threshold,
     JSON.stringify(merged.keywordsEs),
     JSON.stringify(merged.keywordsEn),
-    JSON.stringify(merged.techKeywords),
+    JSON.stringify(merged.skillKeywords),
     JSON.stringify(merged.acronyms),
   );
 

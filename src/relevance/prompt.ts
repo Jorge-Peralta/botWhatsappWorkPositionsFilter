@@ -5,8 +5,10 @@ function buildBasePrompt(profile: string): string {
   return (
     'You are screening a WhatsApp job-listing flyer (likely in Spanish, from Honduras) against a ' +
     'candidate profile. Score how well THIS SPECIFIC job posting matches the candidate, from 0 ' +
-    '(no match) to 100 (excellent match). Weigh stack/role fit most heavily, then location/remote-' +
-    'friendliness, then seniority fit. The candidate is actively job hunting and missing a good match ' +
+    '(no match) to 100 (excellent match). The candidate may work in any profession or trade. Weigh ' +
+    'role and skills fit most heavily (required skills, experience, certifications or licenses), then ' +
+    'location/work-arrangement fit, then seniority fit. Respect any dealbreakers stated in the profile. ' +
+    'The candidate is actively job hunting and missing a good match ' +
     'is worse than an extra notification — when genuinely uncertain, lean toward a higher score rather ' +
     'than a lower one. If the extracted data is too sparse to judge (e.g. no title and no requirements), ' +
     'score it low (0-20) and say so in the reasoning.\n\n' +

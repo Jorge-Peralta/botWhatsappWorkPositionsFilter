@@ -1,6 +1,8 @@
-// Bilingual (Spanish/English) IT-adjacent keyword list used by the OCR
-// pre-filter to decide whether a flyer image is worth sending to the paid
-// vision extraction step.
+// Bilingual (Spanish/English) keyword lists used by the OCR pre-filter to
+// decide whether a flyer image is worth sending to the paid vision extraction
+// step. The literals below are only the fresh-install seed (an example IT
+// profile); the live lists come from the settings table and can describe any
+// profession.
 
 export const SPANISH_ROLE_KEYWORDS = [
   'informatica',
@@ -33,7 +35,7 @@ export const ENGLISH_ROLE_KEYWORDS = [
   'technical support',
 ];
 
-export const TECH_KEYWORDS = [
+export const SKILL_KEYWORDS = [
   '.net',
   'c#',
   'react',
@@ -79,19 +81,19 @@ function buildWordBoundaryRegex(keyword: string, caseSensitive: boolean): RegExp
   return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, flags);
 }
 
-export interface ItKeywordSets {
+export interface KeywordSets {
   keywordsEs: string[];
   keywordsEn: string[];
-  techKeywords: string[];
+  skillKeywords: string[];
   acronyms: string[];
 }
 
-export function containsItKeyword(
+export function containsKeyword(
   rawText: string,
-  keywordSets: ItKeywordSets,
+  keywordSets: KeywordSets,
 ): { matched: boolean; keyword: string | null } {
   const normalized = normalize(rawText);
-  const normalizedKeywords = [...keywordSets.keywordsEs, ...keywordSets.keywordsEn, ...keywordSets.techKeywords];
+  const normalizedKeywords = [...keywordSets.keywordsEs, ...keywordSets.keywordsEn, ...keywordSets.skillKeywords];
 
   for (const keyword of normalizedKeywords) {
     if (buildWordBoundaryRegex(keyword, false).test(normalized)) {

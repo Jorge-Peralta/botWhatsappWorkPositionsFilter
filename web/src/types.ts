@@ -45,6 +45,6 @@ export interface Settings {
   threshold: number;
   keywordsEs: string[];
   keywordsEn: string[];
-  techKeywords: string[];
+  skillKeywords: string[];
   acronyms: string[];
 }

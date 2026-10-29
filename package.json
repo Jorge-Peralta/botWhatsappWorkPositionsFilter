@@ -14,6 +14,7 @@
     "dev": "tsx src/index.ts",
     "test:capture": "tsx src/scripts/testCaptureFromHistory.ts",
     "test:extract": "tsx src/scripts/testExtractFromImage.ts",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "dashboard:api": "tsx src/dashboard/server.ts",
     "dashboard:web": "vite --config web/vite.config.ts"
