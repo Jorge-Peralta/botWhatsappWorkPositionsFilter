@@ -91,6 +91,8 @@ export const ENTRY_LEVEL_KEYWORDS_ES = [
   'call center',
   'sin experiencia',
   'primer empleo',
+  'Secundaria completa',
+  'Secundaria',
 ];
 
 export const ENTRY_LEVEL_KEYWORDS_EN = [
